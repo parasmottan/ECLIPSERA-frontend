@@ -29,7 +29,7 @@ export default function Page({ params }) {
   useEffect(() => {
     const verifyRoom = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/createroom/${roomId}`);
+        const res = await axios.get(`https://eclipsera-backend.onrender.com/api/createroom/${roomId}`);
         if (res.status === 200) setValid(true);
       } catch {
         setValid(false);
@@ -42,7 +42,7 @@ export default function Page({ params }) {
   // ✅ Socket Setup
   useEffect(() => {
     if (!valid) return;
-    const newSocket = io("http://localhost:5000");
+    const newSocket = io("https://eclipsera-backend.onrender.com");
     setSocket(newSocket);
     newSocket.emit("join_room", roomId);
     newSocket.on("receive_message", (data) => setMessages((p) => [...p, data]));
@@ -64,7 +64,7 @@ export default function Page({ params }) {
 
   const fetchRoomVideo = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/movieupload/${roomId}`);
+      const res = await fetch(`https://eclipsera-backend.onrender.com/api/movieupload/${roomId}`);
       const data = await res.json();
       if (data.success && data.video?.hlsUrl) {
         setVideoUrl(data.video.hlsUrl);
@@ -103,7 +103,7 @@ export default function Page({ params }) {
       setUploading(true);
       setStatusMessages(["🚀 Upload started...", "Please don’t refresh this page!"]);
 
-      const res = await fetch("http://localhost:5000/api/upload-url");
+      const res = await fetch("https://eclipsera-backend.onrender.com/api/upload-url");
       const { uploadURL, fileKey } = await res.json();
       setFileKey(fileKey);
 
@@ -115,7 +115,7 @@ export default function Page({ params }) {
       setStatusMessages((p) => [...p, `✅ Upload completed in ${elapsed}s`, "🎬 Starting conversion..."]);
 
       const movieUrl = `https://s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${process.env.NEXT_PUBLIC_AWS_BUCKET}/${fileKey}`;
-      const convertRes = await fetch("http://localhost:5000/api/movieupload/process", {
+      const convertRes = await fetch("https://eclipsera-backend.onrender.com/api/movieupload/process", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ movieUrl, roomId }),
@@ -148,7 +148,7 @@ export default function Page({ params }) {
       onConfirm: async () => {
         setPopup({ visible: false });
         try {
-          const res = await fetch("http://localhost:5000/api/movieupload/delete", {
+          const res = await fetch("https://eclipsera-backend.onrender.com/api/movieupload/delete", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ fileKey }),

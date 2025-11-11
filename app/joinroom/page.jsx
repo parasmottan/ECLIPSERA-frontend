@@ -25,7 +25,7 @@ function Page() {
     e.preventDefault();
 
     try {
-      const res = await fetch(`http://localhost:5000/api/joinroom/${roomId}`, {
+      const res = await fetch(`https://eclipsera-backend.onrender.com/api/joinroom/${roomId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
