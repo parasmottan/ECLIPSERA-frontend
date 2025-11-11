@@ -19,7 +19,7 @@ export default function Page({ params }) {
   const [socket, setSocket] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [statusMessages, setStatusMessages] = useState([]);
-  const [videoUrl, setVideoUrl] = useState(null);
+  const [videoUrl, setVideoUrl] = useState("https://s3.ap-south-1.amazonaws.com/couple.together.innodev/Baramulla/Baramulla.m3u8");
   const [fileKey, setFileKey] = useState(null);
   const [valid, setValid] = useState(null);
   const [popup, setPopup] = useState({
