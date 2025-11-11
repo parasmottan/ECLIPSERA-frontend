@@ -22,40 +22,34 @@ export default function Home() {
   const router = useRouter();
 
   const handleBackgroundClick = (e) => {
-    if (e.target.id === "overlay") {
-      setShowJoinCard(false);
-    }
+    if (e.target.id === "overlay") setShowJoinCard(false);
   };
 
- const handleJoinRoom = (e) => {
-  e.preventDefault();
-
-  if (!roomCode.trim()) {
-    alert("Please enter a room code!");
-    return;
-  }
-
-  // ✅ Step 1: Save verified room first
-  localStorage.setItem("verifiedRoom", roomCode);
-
-  // ✅ Step 2: Then navigate to correct route
-  router.push(`/room/${roomCode}`);
-};
-
+  const handleJoinRoom = (e) => {
+    e.preventDefault();
+    if (!roomCode.trim()) {
+      alert("Please enter a room code!");
+      return;
+    }
+    localStorage.setItem("verifiedRoom", roomCode);
+    router.push(`/room/${roomCode}`);
+  };
 
   return (
-    <div className="relative w-full h-screen bg-[#0D0D0E] text-white overflow-hidden">
+    <div className="relative w-full h-screen bg-[#0D0D0E] text-white overflow-hidden flex flex-col">
       {/* 🟢 Navbar */}
-      <div className="w-full h-20 absolute flex justify-between items-center top-0 px-9 z-20">
-        <h1 className={`text-md text-center cursor-pointer ${cinzel.variable} font-serif`}>
+      <div className="w-full h-20 absolute flex justify-between items-center top-0 px-6 md:px-9 z-20">
+        <h1
+          className={`text-lg md:text-xl tracking-wide ${cinzel.variable} font-serif cursor-pointer`}
+        >
           ECLIPSERA
         </h1>
 
         <button className="moon-btn" aria-label="Toggle theme">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
+            width="22"
+            height="22"
             viewBox="0 0 24 24"
             fill="none"
             stroke="#E5E5E5"
@@ -71,26 +65,29 @@ export default function Home() {
         </button>
       </div>
 
-      {/* 🟢 Main section */}
+      {/* 🟢 Hero Section */}
       <div
-        className={`w-full h-screen flex flex-col items-center justify-center transition-all duration-500 ${
+        className={`w-full h-screen flex flex-col items-center justify-center text-center transition-all duration-500 px-4 ${
           showJoinCard ? "opacity-40 blur-sm" : "opacity-100 blur-0"
         }`}
       >
-        <h1 className={`text-7xl font-semibold ${inter.variable}`}>
-          Stream Together. Feel Together.
+        <h1
+          className={`font-semibold ${inter.variable} leading-tight text-4xl sm:text-5xl md:text-6xl lg:text-7xl max-w-[95%]`}
+        >
+          Stream Together. <br className="sm:hidden" />
+          Feel Together.
         </h1>
 
-        <div className="w-full flex justify-center gap-10 items-center mt-10">
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-8 mt-10">
           <Link href="/createroom">
-            <button className="px-9 cursor-pointer py-3 rounded-xl bg-[#131313] hover:bg-[#252525] transition">
+            <button className="px-8 sm:px-9 py-3 text-sm sm:text-base rounded-xl bg-[#131313] hover:bg-[#252525] transition cursor-pointer w-[70vw] sm:w-auto">
               CREATE A ROOM
             </button>
           </Link>
 
           <button
             onClick={() => setShowJoinCard(true)}
-            className="px-9 cursor-pointer py-3 rounded-xl bg-[#131313] hover:bg-[#252525] transition"
+            className="px-8 sm:px-9 py-3 text-sm sm:text-base rounded-xl bg-[#131313] hover:bg-[#252525] transition cursor-pointer w-[70vw] sm:w-auto"
           >
             JOIN A ROOM
           </button>
@@ -106,9 +103,11 @@ export default function Home() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-[30vw] h-[15vw] bg-[#141414] rounded-xl flex flex-col justify-center items-center text-white animate-fadeIn"
+            className="bg-[#141414] rounded-xl flex flex-col justify-center items-center text-white animate-fadeIn p-6 sm:p-8 w-[90%] sm:w-[70%] md:w-[40%] lg:w-[30vw] max-w-[420px]"
           >
-            <h1 className="text-2xl font-semibold mb-2">Join Room</h1>
+            <h1 className="text-xl sm:text-2xl font-semibold mb-3">
+              Join Room
+            </h1>
 
             <form
               onSubmit={handleJoinRoom}
@@ -119,12 +118,12 @@ export default function Home() {
                 placeholder="Enter Room Code"
                 value={roomCode}
                 onChange={(e) => setRoomCode(e.target.value)}
-                className="w-[25vw] h-12 bg-[#1A1A1A] rounded-lg mt-4 px-4 text-white/50 focus:outline-none"
+                className="w-full sm:w-[80%] h-11 sm:h-12 bg-[#1A1A1A] rounded-lg mt-2 px-4 text-white/70 focus:outline-none focus:ring-1 focus:ring-red-600 transition"
               />
 
               <button
                 type="submit"
-                className="w-[25vw] h-10 bg-[#E50B16] rounded-lg mt-4 cursor-pointer"
+                className="w-full sm:w-[80%] h-10 sm:h-11 bg-[#E50B16] rounded-lg mt-4 hover:bg-[#ff202b] transition"
               >
                 Join
               </button>
