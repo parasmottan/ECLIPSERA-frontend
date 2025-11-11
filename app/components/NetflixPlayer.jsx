@@ -197,13 +197,24 @@ export default function NetflixPlayer({ src, roomId }) {
         playsInline
       />
 
-      {/* 💬 Fullscreen Chat (4K safe) */}
+      {/* 💬 Fullscreen Chat (clamp FIXED) */}
       {isFullscreen && showChat && (
-        <div className="absolute right-[clamp(1rem,3vw,3rem)] bottom-[clamp(4rem,6vh,8rem)] w-[clamp(80%,40vw,30%)] max-h-[60%] bg-black/60 border border-white/10 rounded-2xl text-white flex flex-col overflow-hidden backdrop-blur-md animate-fadeIn">
-          <div className="flex justify-between items-center px-[clamp(0.8rem,1vw,1.2rem)] py-[clamp(0.6rem,1vh,1rem)] border-b border-white/10">
-            <h1 className="font-semibold text-[clamp(0.9rem,1vw,1.2rem)]">
-              Live Chat
-            </h1>
+        <div
+          className="absolute text-white flex flex-col overflow-hidden backdrop-blur-md animate-fadeIn border border-white/10 rounded-2xl bg-black/60"
+          style={{
+            right: "clamp(1rem, 3vw, 3rem)",
+            bottom: "clamp(4rem, 6vh, 8rem)",
+            width: "clamp(80%, 40vw, 30%)",
+            maxHeight: "60%",
+          }}
+        >
+          <div
+            className="flex justify-between items-center border-b border-white/10"
+            style={{
+              padding: "clamp(0.8rem, 1vw, 1.2rem)",
+            }}
+          >
+            <h1 style={{ fontSize: "clamp(0.9rem, 1vw, 1.2rem)" }}>Live Chat</h1>
             <button onClick={() => setShowChat(false)} className="hover:text-red-500 transition">
               <X size={20} />
             </button>
@@ -213,7 +224,8 @@ export default function NetflixPlayer({ src, roomId }) {
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`px-3 py-2 rounded-xl text-[clamp(0.8rem,0.9vw,1rem)] max-w-[80%] ${
+                style={{ fontSize: "clamp(0.8rem, 0.9vw, 1rem)" }}
+                className={`px-3 py-2 rounded-xl max-w-[80%] ${
                   msg.sender === "me"
                     ? "bg-red-600/70 self-end ml-auto"
                     : "bg-[#1f1f1f]/80 self-start"
@@ -224,46 +236,62 @@ export default function NetflixPlayer({ src, roomId }) {
             ))}
           </div>
 
-          <div className="flex items-center gap-2 p-3 border-t border-white/10">
+          <div className="flex items-center gap-2 border-t border-white/10 p-3">
             <input
               type="text"
               placeholder="Type a message..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="flex-1 px-3 py-[clamp(0.5rem,0.8vw,0.8rem)] bg-[#1a1a1a]/70 rounded-full text-[clamp(0.8rem,0.9vw,1rem)] outline-none focus:ring-1 focus:ring-red-600"
+              className="flex-1 px-3 bg-[#1a1a1a]/70 rounded-full outline-none focus:ring-1 focus:ring-red-600 text-white"
+              style={{
+                fontSize: "clamp(0.8rem, 0.9vw, 1rem)",
+                padding: "clamp(0.5rem, 0.8vw, 0.8rem)",
+              }}
             />
             <button
               onClick={handleSend}
-              className="p-[clamp(0.5rem,0.8vw,0.9rem)] bg-red-600 hover:bg-red-700 rounded-full transition"
+              className="bg-red-600 hover:bg-red-700 rounded-full transition text-white"
+              style={{
+                padding: "clamp(0.5rem, 0.8vw, 0.9rem)",
+              }}
             >
-              <Send size={18} className="text-white" />
+              <Send size={18} />
             </button>
           </div>
         </div>
       )}
 
-      {/* 🎛️ Controls (scaled for 4K) */}
+      {/* 🎛️ Controls (clamp FIXED) */}
       <div
-        className={`absolute bottom-0 w-full px-[clamp(1rem,3vw,4rem)] py-[clamp(0.8rem,2vh,2rem)] bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col gap-[clamp(0.6rem,1vh,1.2rem)] transition-all duration-500 ${
+        className={`absolute bottom-0 w-full text-white transition-all duration-500 bg-gradient-to-t from-black/90 via-black/40 to-transparent ${
           showControls ? "opacity-100" : "opacity-0"
         }`}
+        style={{
+          padding: "clamp(0.8rem, 2vh, 2rem) clamp(1rem, 3vw, 4rem)",
+        }}
       >
         <input
           type="range"
           value={progress}
           onChange={handleSeek}
-          className="w-full accent-red-600 cursor-pointer h-[clamp(3px,0.5vh,6px)]"
+          className="w-full accent-red-600 cursor-pointer"
+          style={{
+            height: "clamp(3px, 0.5vh, 6px)",
+          }}
         />
 
-        <div className="flex justify-between items-center text-white">
+        <div className="flex justify-between items-center mt-3">
           <div className="flex items-center gap-[clamp(0.6rem,1vw,1.2rem)]">
             <button onClick={() => skipTime(-10)}>
-              <Rewind size={clamp(20, "1.6vw", 28)} />
+              <Rewind size={24} />
             </button>
             <button
               onClick={togglePlay}
-              className="bg-red-600 hover:bg-red-700 transition p-[clamp(0.6rem,1vw,1.2rem)] rounded-full"
+              className="bg-red-600 hover:bg-red-700 transition rounded-full flex justify-center items-center"
+              style={{
+                padding: "clamp(0.6rem, 1vw, 1.2rem)",
+              }}
             >
               {isPlaying ? <Pause size={24} /> : <Play size={24} />}
             </button>
@@ -280,16 +308,16 @@ export default function NetflixPlayer({ src, roomId }) {
               step="0.05"
               value={volume}
               onChange={handleVolume}
-              className="hidden sm:block w-[clamp(60px,6vw,120px)] accent-red-600 cursor-pointer"
+              className="hidden sm:block accent-red-600 cursor-pointer"
+              style={{
+                width: "clamp(60px, 6vw, 120px)",
+              }}
             />
           </div>
 
           <div className="flex items-center gap-[clamp(0.8rem,1.5vw,2rem)]">
             {isFullscreen && !showChat && (
-              <button
-                onClick={() => setShowChat(true)}
-                className="hover:text-red-500 transition"
-              >
+              <button onClick={() => setShowChat(true)} className="hover:text-red-500 transition">
                 <MessageSquare size={22} />
               </button>
             )}

@@ -67,7 +67,7 @@ export default function Page({ params }) {
   };
   const handleKeyDown = (e) => e.key === "Enter" && handleSend();
 
-  // 🧠 Fetch existing movie from DB if available
+  // 🧠 Fetch existing movie
   useEffect(() => {
     if (!valid || !roomId) return;
     const fetchRoomVideo = async () => {
@@ -229,7 +229,10 @@ export default function Page({ params }) {
   if (!valid) return null;
 
   return (
-    <div className="w-full min-h-screen bg-[#0D0D0E] text-white flex flex-col overflow-hidden relative text-[clamp(14px,0.9vw,18px)]">
+    <div
+      className="w-full min-h-screen bg-[#0D0D0E] text-white flex flex-col overflow-hidden relative"
+      style={{ fontSize: "clamp(14px, 0.9vw, 18px)" }}
+    >
       {/* 🌫️ Global Popup */}
       {popup.visible && (
         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
@@ -260,7 +263,10 @@ export default function Page({ params }) {
       )}
 
       {/* 🔝 TOP BAR */}
-      <div className="w-full h-[4rem] flex justify-between items-center px-[3vw] bg-[#0D0D0E]/90 border-b border-white/5 backdrop-blur-md z-40 text-[clamp(12px,0.8vw,16px)]">
+      <div
+        className="w-full h-[4rem] flex justify-between items-center px-[3vw] bg-[#0D0D0E]/90 border-b border-white/5 backdrop-blur-md z-40"
+        style={{ fontSize: "clamp(12px, 0.8vw, 16px)" }}
+      >
         <div
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition"
           onClick={() => router.push("/")}
@@ -281,10 +287,18 @@ export default function Page({ params }) {
           </svg>
           <h1>Leave</h1>
         </div>
-        <h1 className={`text-[clamp(16px,1vw,24px)] font-bold ${cinzel.variable}`}>
+
+        <h1
+          className={`font-bold ${cinzel.variable}`}
+          style={{ fontSize: "clamp(16px, 1vw, 24px)" }}
+        >
           ECLIPSERA
         </h1>
-        <div className="px-3 py-1 bg-[#1A1A1A] rounded-full text-[clamp(10px,0.7vw,14px)]">
+
+        <div
+          className="px-3 py-1 bg-[#1A1A1A] rounded-full"
+          style={{ fontSize: "clamp(10px, 0.7vw, 14px)" }}
+        >
           Room: {roomId}
         </div>
       </div>
@@ -298,34 +312,42 @@ export default function Page({ params }) {
           </div>
 
           {/* Uploading Overlay */}
-      {uploading && (
-  <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col justify-center items-center text-center p-4 sm:p-6 md:p-8 overflow-hidden z-50">
-    <div className="flex flex-col items-center w-[90%] sm:w-[80%] md:w-[70%] lg:w-[60%] xl:w-[40%] max-w-[600px]">
-      <h1 className="text-[clamp(14px,2.5vw,20px)] font-semibold text-white/90 mb-3 sm:mb-4">
-        🎥 Uploading & Processing
-      </h1>
+          {uploading && (
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col justify-center items-center text-center p-4 sm:p-6 md:p-8 overflow-hidden z-50">
+              <div className="flex flex-col items-center w-[90%] sm:w-[80%] md:w-[70%] lg:w-[60%] xl:w-[40%] max-w-[600px]">
+                <h1
+                  className="font-semibold text-white/90 mb-3 sm:mb-4"
+                  style={{ fontSize: "clamp(14px, 2.5vw, 20px)" }}
+                >
+                  🎥 Uploading & Processing
+                </h1>
 
-      <div className="flex flex-col gap-1 sm:gap-2 w-full">
-        {statusMessages.map((msg, i) => (
-          <p
-            key={i}
-            className="text-[clamp(12px,2vw,16px)] text-white/70 animate-pulse leading-snug break-words"
-            style={{ animationDelay: `${i * 0.3}s` }}
-          >
-            {msg}
-          </p>
-        ))}
-      </div>
+                <div className="flex flex-col gap-1 sm:gap-2 w-full">
+                  {statusMessages.map((msg, i) => (
+                    <p
+                      key={i}
+                      className="text-white/70 animate-pulse leading-snug break-words"
+                      style={{
+                        fontSize: "clamp(12px, 2vw, 16px)",
+                        animationDelay: `${i * 0.3}s`,
+                      }}
+                    >
+                      {msg}
+                    </p>
+                  ))}
+                </div>
 
-      <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-white border-t-transparent rounded-full animate-spin mt-5 sm:mt-6"></div>
-    </div>
-  </div>
-)}
-
+                <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-white border-t-transparent rounded-full animate-spin mt-5 sm:mt-6"></div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 💬 CHAT PANEL */}
-        <div className="w-full lg:w-[30%] flex flex-col bg-[#151515] rounded-2xl shadow-lg overflow-hidden max-h-[90vh]">
+        <div
+          className="w-full lg:w-[30%] flex flex-col bg-[#151515] rounded-2xl shadow-lg overflow-hidden max-h-[90vh]"
+          style={{ fontSize: "clamp(13px, 0.9vw, 16px)" }}
+        >
           <div className="bg-[#151515] rounded-xl flex flex-col justify-between overflow-hidden h-full">
             {/* Upload/Delete */}
             <div className="p-3 border-b border-[#1C1C1C] flex flex-col justify-center items-center">
@@ -334,21 +356,7 @@ export default function Page({ params }) {
                   onClick={handleDelete}
                   className="px-6 py-2 bg-gradient-to-r from-gray-700 to-gray-600 text-sm font-medium rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-gray-800/40 transition-all"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    viewBox="0 0 24 24"
-                  >
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6L17.9 19.03A2 2 0 0115.91 21H8.09A2 2 0 016.1 19.03L5 6m5 0V4a2 2 0 012-2h0a2 2 0 012 2v2" />
-                  </svg>
-                  <span>Delete Movie</span>
+                  🗑️ Delete Movie
                 </button>
               ) : (
                 <>
@@ -356,22 +364,7 @@ export default function Page({ params }) {
                     htmlFor="fileInput"
                     className="px-6 py-2 bg-gradient-to-r from-red-600 to-red-500 text-sm font-medium rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-red-700/40 transition-all"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#fff"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M12 3v12"></path>
-                      <path d="m17 8-5-5-5 5"></path>
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    </svg>
-                    <span>Upload</span>
+                    ⬆️ Upload
                   </label>
                   <input
                     id="fileInput"
@@ -387,7 +380,7 @@ export default function Page({ params }) {
             </div>
 
             {/* Chat Messages */}
-            <div className="flex-1 p-3 overflow-y-auto scrollbar-thin scrollbar-thumb-[#333] scrollbar-track-[#1A1A1A] space-y-2 text-[clamp(13px,0.9vw,16px)]">
+            <div className="flex-1 p-3 overflow-y-auto scrollbar-thin scrollbar-thumb-[#333] scrollbar-track-[#1A1A1A] space-y-2">
               {messages.map((msg, i) => (
                 <div
                   key={i}
@@ -416,20 +409,7 @@ export default function Page({ params }) {
                 onClick={handleSend}
                 className="p-2 hover:bg-[#2A2A2A] rounded-full transition"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#bbb"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"></path>
-                  <path d="m21.854 2.147-10.94 10.939"></path>
-                </svg>
+                ➤
               </button>
             </div>
           </div>
