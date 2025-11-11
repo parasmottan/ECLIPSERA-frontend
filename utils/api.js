@@ -1,5 +1,5 @@
 import axios from "axios";
 
 export const BASE_URL = axios.create({
-  baseURL: "https://eclipsera-backend.onrender.com/api/createroom",
+  baseURL: "https://eclipsera-backend-ze1p.onrender.com/api/createroom",
 });

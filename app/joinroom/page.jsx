@@ -36,7 +36,7 @@ function Page() {
 
     try {
       const res = await fetch(
-        `https://eclipsera-backend.onrender.com/api/joinroom/${roomId}`,
+        `https://eclipsera-backend-ze1p.onrender.com/api/joinroom/${roomId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
