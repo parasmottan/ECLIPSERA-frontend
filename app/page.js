@@ -38,9 +38,9 @@ export default function Home() {
   return (
     <div className="relative w-full h-screen bg-[#0D0D0E] text-white overflow-hidden flex flex-col">
       {/* 🟢 Navbar */}
-      <div className="w-full h-20 absolute flex justify-between items-center top-0 px-6 md:px-9 z-20">
+      <div className="w-full h-20 absolute flex justify-between items-center top-0 px-[clamp(1rem,3vw,3rem)] z-20">
         <h1
-          className={`text-lg md:text-xl tracking-wide ${cinzel.variable} font-serif cursor-pointer`}
+          className={`text-[clamp(1rem,1.6vw,1.8rem)] tracking-wide ${cinzel.variable} font-serif cursor-pointer`}
         >
           ECLIPSERA
         </h1>
@@ -48,8 +48,8 @@ export default function Home() {
         <button className="moon-btn" aria-label="Toggle theme">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="22"
-            height="22"
+            width="clamp(20,2vw,32)"
+            height="clamp(20,2vw,32)"
             viewBox="0 0 24 24"
             fill="none"
             stroke="#E5E5E5"
@@ -57,7 +57,6 @@ export default function Home() {
             strokeLinecap="round"
             strokeLinejoin="round"
             className="moon-icon"
-            aria-hidden="true"
             opacity="0.9"
           >
             <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"></path>
@@ -72,22 +71,22 @@ export default function Home() {
         }`}
       >
         <h1
-          className={`font-semibold ${inter.variable} leading-tight text-4xl sm:text-5xl md:text-6xl lg:text-7xl max-w-[95%]`}
+          className={`font-semibold ${inter.variable} leading-tight text-[clamp(2rem,4vw,5rem)] max-w-[90%] lg:max-w-[70%] 4k:max-w-[60%]`}
         >
           Stream Together. <br className="sm:hidden" />
           Feel Together.
         </h1>
 
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-8 mt-10">
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-8 mt-[clamp(2rem,4vw,3rem)]">
           <Link href="/createroom">
-            <button className="px-8 sm:px-9 py-3 text-sm sm:text-base rounded-xl bg-[#131313] hover:bg-[#252525] transition cursor-pointer w-[70vw] sm:w-auto">
+            <button className="px-[clamp(1.5rem,3vw,3.5rem)] py-[clamp(0.8rem,1vw,1rem)] text-[clamp(0.9rem,1vw,1.2rem)] rounded-xl bg-[#131313] hover:bg-[#252525] transition cursor-pointer w-[70vw] sm:w-auto max-w-[300px]">
               CREATE A ROOM
             </button>
           </Link>
 
           <button
             onClick={() => setShowJoinCard(true)}
-            className="px-8 sm:px-9 py-3 text-sm sm:text-base rounded-xl bg-[#131313] hover:bg-[#252525] transition cursor-pointer w-[70vw] sm:w-auto"
+            className="px-[clamp(1.5rem,3vw,3.5rem)] py-[clamp(0.8rem,1vw,1rem)] text-[clamp(0.9rem,1vw,1.2rem)] rounded-xl bg-[#131313] hover:bg-[#252525] transition cursor-pointer w-[70vw] sm:w-auto max-w-[300px]"
           >
             JOIN A ROOM
           </button>
@@ -103,9 +102,9 @@ export default function Home() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-[#141414] rounded-xl flex flex-col justify-center items-center text-white animate-fadeIn p-6 sm:p-8 w-[90%] sm:w-[70%] md:w-[40%] lg:w-[30vw] max-w-[420px]"
+            className="bg-[#141414] rounded-xl flex flex-col justify-center items-center text-white animate-fadeIn p-[clamp(1rem,2vw,2.5rem)] w-[90%] sm:w-[70%] md:w-[40%] lg:w-[30%] 2xl:w-[25%] 4k:w-[20%] max-w-[500px]"
           >
-            <h1 className="text-xl sm:text-2xl font-semibold mb-3">
+            <h1 className="text-[clamp(1.2rem,1.8vw,2rem)] font-semibold mb-3">
               Join Room
             </h1>
 
@@ -118,12 +117,12 @@ export default function Home() {
                 placeholder="Enter Room Code"
                 value={roomCode}
                 onChange={(e) => setRoomCode(e.target.value)}
-                className="w-full sm:w-[80%] h-11 sm:h-12 bg-[#1A1A1A] rounded-lg mt-2 px-4 text-white/70 focus:outline-none focus:ring-1 focus:ring-red-600 transition"
+                className="w-full sm:w-[80%] h-[clamp(2.5rem,3vw,3rem)] bg-[#1A1A1A] rounded-lg mt-2 px-4 text-[clamp(0.9rem,1vw,1.1rem)] text-white/70 focus:outline-none focus:ring-1 focus:ring-red-600 transition"
               />
 
               <button
                 type="submit"
-                className="w-full sm:w-[80%] h-10 sm:h-11 bg-[#E50B16] rounded-lg mt-4 hover:bg-[#ff202b] transition"
+                className="w-full sm:w-[80%] h-[clamp(2.5rem,3vw,3rem)] bg-[#E50B16] rounded-lg mt-4 hover:bg-[#ff202b] transition text-[clamp(0.9rem,1vw,1.1rem)] font-medium"
               >
                 Join
               </button>
@@ -145,6 +144,13 @@ export default function Home() {
         }
         .animate-fadeIn {
           animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        @media (min-width: 2560px) {
+          /* 4K TV / UltraWide scaling */
+          .4k\\:max-w\\[60\\%\\] {
+            max-width: 60%;
+          }
         }
       `}</style>
     </div>

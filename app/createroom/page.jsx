@@ -46,52 +46,53 @@ function Page() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#0D0D0E] text-white flex flex-col items-center justify-center px-4">
+    <div className="w-full min-h-screen bg-[#0D0D0E] text-white flex flex-col items-center justify-center px-[clamp(1rem,3vw,5rem)]">
       {/* 🔝 Navbar */}
-      <div className="w-full max-w-[90%] md:max-w-[80%] h-20 flex justify-between items-center top-0 px-2 md:px-9 fixed bg-[#0D0D0E]/80 backdrop-blur-sm z-20 border-b border-white/5">
+      <div className="w-full max-w-[90%] md:max-w-[80%] h-[clamp(60px,5vw,90px)] flex justify-between items-center top-0 px-[clamp(1rem,2vw,3rem)] fixed bg-[#0D0D0E]/80 backdrop-blur-sm z-20 border-b border-white/5">
         <h1
-          className={`text-lg md:text-md text-center cursor-pointer ${cinzel.variable} font-serif`}
+          className={`text-[clamp(1rem,1.5vw,1.8rem)] text-center cursor-pointer ${cinzel.variable} font-serif`}
         >
           ECLIPSERA
         </h1>
 
         <Link href="/">
-          <button className="text-xs sm:text-sm text-white/50 hover:text-white transition">
+          <button className="text-[clamp(0.8rem,1vw,1rem)] text-white/60 hover:text-white transition">
             Back
           </button>
         </Link>
       </div>
 
       {/* 🎬 Main Content */}
-      <div className="w-full flex flex-col justify-center items-center mt-28 md:mt-0 gap-6 md:gap-8 text-center md:text-left">
+      <div className="w-full flex flex-col justify-center items-center mt-[clamp(6rem,10vh,12rem)] gap-[clamp(1.2rem,2vw,2.5rem)] text-center">
         <h1
-          className={`text-3xl sm:text-4xl md:text-5xl font-semibold ${inter.variable}`}
+          className={`font-semibold ${inter.variable} text-[clamp(1.8rem,3vw,4rem)] leading-tight`}
         >
           Welcome to Your Cinema
         </h1>
-        <h2 className="text-xs sm:text-sm text-white/50">
+        <h2 className="text-[clamp(0.8rem,1vw,1rem)] text-white/50">
           Share your room code and enter your name to begin
         </h2>
 
         {/* 🧾 Room Code Card */}
-        <div className="w-full sm:w-[80%] md:w-[55%] rounded-2xl border border-white/10 bg-[#161616] py-5 px-6 flex flex-col gap-3 shadow-lg">
-          <h1 className="text-[0.9rem] text-white/45 uppercase tracking-wide">
+        <div className="w-full sm:w-[85%] md:w-[60%] lg:w-[45%] 2xl:w-[35%] 4k:w-[30%] rounded-2xl border border-white/10 bg-[#161616] py-[clamp(1.2rem,2vw,2.8rem)] px-[clamp(1rem,2vw,3rem)] flex flex-col gap-[clamp(0.8rem,1.2vw,1.6rem)] shadow-lg animate-fadeIn">
+          <h1 className="text-[clamp(0.8rem,1vw,1rem)] text-white/45 uppercase tracking-wide">
             Your Room Code
           </h1>
+
           <div className="w-full flex justify-between items-center flex-wrap gap-4">
-            <h1 className="text-2xl sm:text-3xl md:text-2xl font-semibold text-[#E4E4E4] break-all">
+            <h1 className="text-[clamp(1.4rem,2.2vw,2.6rem)] font-semibold text-[#E4E4E4] break-all">
               {loading ? "Generating..." : roomCode || "—"}
             </h1>
 
             {/* 📋 Copy Button */}
             <div
-              className="relative w-10 h-10 cursor-pointer bg-[#1B1B1B] rounded-xl flex justify-center items-center active:bg-gray-800 hover:bg-[#222] transition"
+              className="relative w-[clamp(2.5rem,3vw,3.2rem)] h-[clamp(2.5rem,3vw,3.2rem)] cursor-pointer bg-[#1B1B1B] rounded-xl flex justify-center items-center active:bg-gray-800 hover:bg-[#222] transition"
               onClick={handleCopy}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
+                width="clamp(18,1.5vw,22)"
+                height="clamp(18,1.5vw,22)"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="#E5E5E5"
@@ -103,7 +104,7 @@ function Page() {
                 <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
               </svg>
               {copied && (
-                <span className="absolute -top-5 text-[10px] text-green-400">
+                <span className="absolute -top-5 text-[clamp(10px,0.8vw,12px)] text-green-400">
                   Copied!
                 </span>
               )}
@@ -112,8 +113,8 @@ function Page() {
         </div>
 
         {/* 🧍‍♂️ User Name Form */}
-        <form className="w-full sm:w-[80%] md:w-[55%] flex flex-col gap-4 mt-4">
-          <h1 className="font-semibold text-sm sm:text-base text-white/80">
+        <form className="w-full sm:w-[85%] md:w-[60%] lg:w-[45%] 2xl:w-[35%] 4k:w-[30%] flex flex-col gap-[clamp(1rem,1.5vw,2rem)] mt-[clamp(1.5rem,2vw,2.5rem)]">
+          <h1 className="font-semibold text-[clamp(0.9rem,1vw,1.1rem)] text-white/80 text-left">
             Your Name
           </h1>
 
@@ -123,7 +124,7 @@ function Page() {
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
             placeholder="Enter your name"
-            className="w-full h-12 px-4 rounded-xl border-none outline-none bg-[#1C1B1C] text-white/70 focus:ring-1 focus:ring-red-600 transition"
+            className="w-full h-[clamp(2.8rem,3.5vw,3.8rem)] px-4 rounded-xl border-none outline-none bg-[#1C1B1C] text-white/70 focus:ring-1 focus:ring-red-600 transition text-[clamp(0.9rem,1vw,1.1rem)]"
           />
 
           <Link
@@ -133,7 +134,7 @@ function Page() {
             <button
               type="submit"
               disabled={!roomCode}
-              className={`w-full sm:w-[70%] h-12 mt-3 flex justify-center items-center gap-3 rounded-xl transition ${
+              className={`w-full sm:w-[70%] md:w-[55%] mx-auto h-[clamp(2.8rem,3.5vw,3.8rem)] flex justify-center items-center gap-3 rounded-xl transition text-[clamp(0.9rem,1vw,1.1rem)] font-medium ${
                 roomCode
                   ? "bg-[#E50B16] hover:bg-[#ff202b]"
                   : "bg-gray-700 cursor-not-allowed"
@@ -142,15 +143,15 @@ function Page() {
               ENTER CINEMA
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
+                width="clamp(16,1.5vw,20)"
+                height="clamp(16,1.5vw,20)"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="lucide lucide-arrow-right text-lg"
+                className="lucide lucide-arrow-right"
               >
                 <path d="M5 12h14"></path>
                 <path d="m12 5 7 7-7 7"></path>
@@ -174,6 +175,13 @@ function Page() {
         }
         .animate-fadeIn {
           animation: fadeIn 0.4s ease-in-out forwards;
+        }
+
+        @media (min-width: 2560px) {
+          /* 4K layout refinement */
+          .4k\\:w\\[30\\%\\] {
+            width: 30%;
+          }
         }
       `}</style>
     </div>
