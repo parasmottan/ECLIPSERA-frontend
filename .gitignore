@@ -1,41 +1,77 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ========================================
+# 🚀 Node / Next.js Frontend .gitignore
+# ========================================
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
+# Node modules
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# Build outputs
+.next/
+out/
+dist/
+build/
+.cache/
 
-# vercel
-.vercel
+# Local environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# OS-generated junk files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+desktop.ini
+
+# IDE / Editor folders
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Log files
+*.log
+logs/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage / test artifacts
+coverage/
+*.lcov
+
+# Optional Next.js telemetry
+.next/trace
+.next/cache/
+.next/static/
+
+# Optional lock files (if you use specific package manager)
+# Uncomment the one you don’t use
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Uploaded files (if any local uploads folder)
+uploads/
+public/uploads/
+
+# Local runtime data
+*.local
+*.tmp
+temp/
+
+# Firebase / Vercel / Netlify builds
+.firebase/
+.vercel/
+.netlify/
+node_modules

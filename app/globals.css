@@ -1,26 +1,156 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Base */
+
+
+body{
+  overflow-x: hidden;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+/* ✅ Hide scrollbar but allow scrolling */
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.no-scrollbar::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  display: none;
+  background: transparent; /* optional */
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+
+
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease forwards;
+}
+.animate-scaleIn {
+  animation: scaleIn 0.25s ease forwards;
+}
+
+
+.moon-btn{
+  --size: 44px;                  /* button size, change as needed */
+  width: var(--size);
+  height: var(--size);
+  display: inline-grid;
+  place-items: center;
+  position: relative;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  border-radius: 999px;
+  transition: transform 220ms ease;
+  isolation: isolate; /* keep fog layers blended nicely */
+}
+
+/* Slight lift on focus/active for accessibility */
+.moon-btn:focus {
+  outline: 2px solid rgba(229,229,229,0.12);
+  outline-offset: 3px;
+  transform: translateY(-2px);
+}
+
+/* Icon scale gently on hover */
+.moon-btn:hover .moon-icon,
+.moon-btn:focus .moon-icon {
+  transform: scale(1.08);
+  transition: transform 220ms cubic-bezier(.2,.9,.2,1);
+  filter: drop-shadow(0 8px 14px rgba(0,0,0,0.45));
+}
+
+/* --- Fog layers --- */
+/* Using two pseudo-elements for depth. They are invisible by default and appear on hover. */
+.moon-btn::before,
+.moon-btn::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  pointer-events: none;
+  border-radius: 50%;
+  width: calc(var(--size) * 2.4);   /* larger than button */
+  height: calc(var(--size) * 2.4);
+  opacity: 0;
+  transition: opacity 360ms ease, transform 600ms cubic-bezier(.2,.9,.2,1);
+  mix-blend-mode: screen; /* gives glowing/fog blend on dark backgrounds */
+  will-change: opacity, transform, filter;
+  filter: blur(14px);
+  background:
+    radial-gradient(closest-side, rgba(229,229,229,0.08) 0%, rgba(229,229,229,0.02) 45%, transparent 70%);
+}
+
+/* second layer: bigger, slower, slightly offset */
+.moon-btn::after{
+  width: calc(var(--size) * 3.6);
+  height: calc(var(--size) * 3.6);
+  transform: translate(calc(-50% + 6px), calc(-50% - 2px)) scale(0.95);
+  background:
+    radial-gradient(closest-side, rgba(229,229,229,0.055) 0%, rgba(229,229,229,0.01) 50%, transparent 75%);
+  filter: blur(22px);
+  opacity: 0;
+  transition-duration: 420ms;
+}
+
+/* Hover/focus state: reveal fog and animate drifting */
+.moon-btn:hover::before,
+.moon-btn:focus::before {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.05);
+  animation: fogDriftSmall 6s linear infinite;
+}
+.moon-btn:hover::after,
+.moon-btn:focus::after {
+  opacity: 1;
+  transform: translate(calc(-50% + 10px), calc(-50% - 6px)) scale(1.08);
+  animation: fogDriftLarge 10s linear infinite;
+}
+
+/* subtle motion keyframes to mimic floating fog */
+@keyframes fogDriftSmall {
+  0%   { transform: translate(-50%, -50%) rotate(0deg) scale(1.03);   opacity: 1; }
+  25%  { transform: translate(-53%, -48%) rotate(2deg)  scale(1.04);  opacity: 0.95; }
+  50%  { transform: translate(-47%, -52%) rotate(-1deg) scale(1.02);  opacity: 0.98; }
+  75%  { transform: translate(-49%, -55%) rotate(1.5deg) scale(1.05); opacity: 0.92; }
+  100% { transform: translate(-50%, -50%) rotate(0deg)  scale(1.03);   opacity: 1; }
+}
+
+@keyframes fogDriftLarge {
+  0%   { transform: translate(calc(-50% + 10px), calc(-50% - 6px)) rotate(0deg) scale(1.08);  opacity: 1; }
+  25%  { transform: translate(calc(-50% + 4px), calc(-50% - 14px)) rotate(-2deg) scale(1.09); opacity: 0.88; }
+  50%  { transform: translate(calc(-50% + 12px), calc(-50% - 2px)) rotate(1deg)  scale(1.07);  opacity: 0.94; }
+  75%  { transform: translate(calc(-50% + 8px), calc(-50% - 10px)) rotate(-0.8deg) scale(1.10); opacity: 0.86; }
+  100% { transform: translate(calc(-50% + 10px), calc(-50% - 6px)) rotate(0deg)  scale(1.08);  opacity: 1; }
+}
+
+/* Optional: tiny sparkles that appear briefly (useful if you want a bit of shimmer) */
+.moon-btn .spark {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(229,229,229,0.85);
+  opacity: 0;
+  pointer-events: none;
+  transform-origin: center;
+}
+.moon-btn:hover .spark { animation: sparkle 900ms ease forwards; }
+@keyframes sparkle {
+  0%   { opacity: 0; transform: translateY(0) scale(0.6); }
+  20%  { opacity: 1; transform: translateY(-6px) scale(1); }
+  100% { opacity: 0; transform: translateY(-12px) scale(0.3); }
 }
