@@ -37,45 +37,44 @@ export default function Page({ params }) {
   // ---------------------------------------------
   // 1️⃣ FINAL BUG-FREE VERIFY ROOM
   // ---------------------------------------------
-  useEffect(() => {
-    if (!realRoomId) return;
+ useEffect(() => {
+  if (!realRoomId) return;
 
-    let cancelled = false;
+  let cancelled = false;
 
-    const verifyRoom = async () => {
-      try {
-        const res = await fetch(
-          `https://eclipsera.zeabur.app/api/createroom/${realRoomId}`
-        );
+  const verify = async () => {
+    try {
+      const res = await fetch(
+        `https://eclipsera.zeabur.app/api/createroom/${realRoomId}`
+      );
 
-        if (cancelled) return;
+      if (cancelled) return;
 
-        const data = await res.json();
-
-        // ❗ REAL condition: backend returns success:false for invalid room
-        if (data?.success === false) {
-          console.log("❌ Invalid room, redirecting...");
-          setValid(false);
-          router.push("/");
-          return;
-        }
-
-        // ✔ Room exists
-        setValid(true);
-      } catch (err) {
-        console.log("Room verify error:", err.message);
-
-        // DON’T redirect on TEMPORARY errors
-        setValid(null);
+      // ❌ ROOM NOT FOUND → 404
+      if (res.status === 404) {
+        setValid(false);
+        router.push("/");
+        return;
       }
-    };
 
-    verifyRoom();
+      // ✔ ROOM EXISTS
+      if (res.status === 200) {
+        setValid(true);
+        return;
+      }
 
-    return () => {
-      cancelled = true;
-    };
-  }, [realRoomId]);
+      // 😐 Any other error → don't redirect
+      setValid(null);
+
+    } catch (err) {
+      console.error("Verification error:", err.message);
+      if (!cancelled) setValid(null);
+    }
+  };
+
+  verify();
+  return () => (cancelled = true);
+}, [realRoomId]);
 
   // ---------------------------------------------
   // 2️⃣ SOCKET CONNECTION + REALTIME VIDEO
