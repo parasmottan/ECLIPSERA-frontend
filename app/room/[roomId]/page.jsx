@@ -37,11 +37,7 @@ export default function Page({ params }) {
 
   const router = useRouter();
 
-  // ---------------------------------------------
-  // ✅ Verify Room (ONLY when realRoomId is available)
-  // ---------------------------------------------
-// ✅ SAFEST ROOM VERIFICATION (no wrong redirects)
-// ✅ SAFEST ROOM VERIFICATION (no wrong redirects)
+ 
 useEffect(() => {
   if (!realRoomId) return;
 
@@ -82,29 +78,47 @@ useEffect(() => {
 }, [realRoomId]);
 
 
-  useEffect(() => {
-    if (valid !== true || !realRoomId) return;
+  // -------------------------------
+// 2️⃣ FULLY FIXED SOCKET CONNECTION (REALTIME VIDEO SYNC)
+// -------------------------------
+useEffect(() => {
+  if (valid !== true || !realRoomId) return;
 
-    const newSocket = io("https://eclipsera.zeabur.app", {
-      transports: ["websocket"],
-      autoConnect: true,
-    });
+  const newSocket = io("https://eclipsera.zeabur.app", {
+    transports: ["websocket"],
+    autoConnect: true,
+  });
 
-    setSocket(newSocket);
+  setSocket(newSocket);
 
-    newSocket.on("connect", () => {
-      newSocket.emit("join_room", realRoomId);
-    });
+  newSocket.on("connect", () => {
+    console.log("🔗 Connected to room:", realRoomId);
+    newSocket.emit("join_room", realRoomId);
+  });
 
-    newSocket.on("receive_message", (data) =>
-      setMessages((prev) => [...prev, data])
-    );
+  // 📩 Text Messages
+  newSocket.on("receive_message", (data) =>
+    setMessages((prev) => [...prev, data])
+  );
 
-    return () => {
-      newSocket.disconnect();
-      setSocket(null);
-    };
-  }, [valid, realRoomId]);
+  // 📽 REAL-TIME: Movie converted & ready
+  newSocket.on("video_ready", (hlsUrl) => {
+    console.log("🎥 REAL-TIME MOVIE RECEIVED:", hlsUrl);
+    setVideoUrl(hlsUrl);
+  });
+
+  // 🗑 REAL-TIME: Movie deleted
+  newSocket.on("video_deleted", () => {
+    console.log("🗑 REAL-TIME DELETE RECEIVED");
+    setVideoUrl(null);
+    setFileKey(null);
+  });
+
+  return () => {
+    newSocket.disconnect();
+    setSocket(null);
+  };
+}, [valid, realRoomId]);
 
  
   const handleSend = () => {
