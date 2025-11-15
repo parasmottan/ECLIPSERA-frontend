@@ -37,7 +37,7 @@ export default function Page({ params }) {
   // ---------------------------------------------
   // 1️⃣ FINAL BUG-FREE VERIFY ROOM
   // ---------------------------------------------
- useEffect(() => {
+useEffect(() => {
   if (!realRoomId) return;
 
   let cancelled = false;
@@ -45,29 +45,30 @@ export default function Page({ params }) {
   const verify = async () => {
     try {
       const res = await fetch(
-        `https://eclipsera.zeabur.app/api/createroom/${realRoomId}`
+        `https://eclipsera.zeabur.app/api/createroom/${realRoomId}`,
+        {
+          method: "GET",
+          cache: "no-store",   //  🔥 THIS FIXES EVERYTHING
+          headers: { "Cache-Control": "no-cache" }
+        }
       );
 
       if (cancelled) return;
 
-      // ❌ ROOM NOT FOUND → 404
       if (res.status === 404) {
         setValid(false);
         router.push("/");
         return;
       }
 
-      // ✔ ROOM EXISTS
       if (res.status === 200) {
         setValid(true);
         return;
       }
 
-      // 😐 Any other error → don't redirect
       setValid(null);
-
     } catch (err) {
-      console.error("Verification error:", err.message);
+      console.log("Room verify error:", err.message);
       if (!cancelled) setValid(null);
     }
   };
@@ -76,9 +77,8 @@ export default function Page({ params }) {
   return () => (cancelled = true);
 }, [realRoomId]);
 
-  // ---------------------------------------------
-  // 2️⃣ SOCKET CONNECTION + REALTIME VIDEO
-  // ---------------------------------------------
+
+  
   useEffect(() => {
     if (valid !== true || !realRoomId) return;
 
