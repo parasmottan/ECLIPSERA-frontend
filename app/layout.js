@@ -14,7 +14,11 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "ECLIPSERA",
   description: "Watch movies together online with ECLIPSERA",
+   icons: {
+    icon: "eclipsra.jpg", // or /logo.png
+  },
 };
+
 
 export default function RootLayout({ children }) {
   return (
