@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { Cinzel } from "next/font/google";
 import NetflixPlayer from "../../components/NetflixPlayer";
-import axios from "axios";
 import { useRouter } from "next/navigation";
 import { io } from "socket.io-client";
 
@@ -13,21 +12,23 @@ const cinzel = Cinzel({
 });
 
 export default function Page({ params }) {
-  // ---------------------------------------------
-  // 🛠 SAFE ROOM ID (prevents refresh crash)
-  // ---------------------------------------------
+  // SAFEST ROOMID
   const realRoomId = params?.roomId
     ? String(params.roomId).toLowerCase().trim()
     : null;
 
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
-  const [socket, setSocket] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [statusMessages, setStatusMessages] = useState([]);
+  const router = useRouter();
+
+  const [valid, setValid] = useState(null);
   const [videoUrl, setVideoUrl] = useState(null);
   const [fileKey, setFileKey] = useState(null);
-  const [valid, setValid] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [statusMessages, setStatusMessages] = useState([]);
+  const [socket, setSocket] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+
+  // POPUP
   const [popup, setPopup] = useState({
     visible: false,
     type: "",
@@ -35,68 +36,60 @@ export default function Page({ params }) {
     onConfirm: null,
   });
 
-  const router = useRouter();
+  // -------------------------------
+  // 1️⃣ VERIFY ROOM
+  // -------------------------------
+  useEffect(() => {
+    if (!realRoomId) return;
 
-  // ---------------------------------------------
-  // ✅ Verify Room (ONLY when realRoomId is available)
-  // ---------------------------------------------
+    let cancelled = false;
 
+    const verify = async () => {
+      try {
+        const res = await fetch(
+          `https://eclipsera.zeabur.app/api/createroom/${realRoomId}`
+        );
 
-  // ✅ SAFEST ROOM VERIFICATION (no wrong redirects)
-useEffect(() => {
-  if (!realRoomId) return;
+        if (cancelled) return;
 
-  let cancelled = false;
+        if (res.status === 404) {
+          setValid(false);
+          router.push("/");
+          return;
+        }
 
-  const verifyRoom = async () => {
-    try {
-      const res = await fetch(
-        `https://eclipsera.zeabur.app/api/createroom/${realRoomId}`
-      );
+        if (res.status === 200) {
+          setValid(true);
+          return;
+        }
 
-      if (cancelled) return;
-
-      const data = await res.json();
-
-      // ❗ REAL CHECK → backend returns { success: false } NOT 404
-      if (data.success === false) {
-        setValid(false);
-        router.push("/");
-        return;
+        // random errors → don't redirect
+        setValid(null);
+      } catch {
+        if (!cancelled) setValid(null);
       }
+    };
 
-      // ✔ room exists
-      setValid(true);
-    } catch (err) {
-      console.log("Room verify error:", err.message);
+    verify();
+    return () => {
+      cancelled = true;
+    };
+  }, [realRoomId]);
 
-      // ❗ Do NOT redirect on server/network error
-      setValid(null);
-    }
-  };
-
-  verifyRoom();
-
-  return () => {
-    cancelled = true;
-  };
-}, [realRoomId]);
-
-
-
-
-
+  // -------------------------------
+  // 2️⃣ SOCKET CONNECTION
+  // -------------------------------
   useEffect(() => {
     if (valid !== true || !realRoomId) return;
 
     const newSocket = io("https://eclipsera.zeabur.app", {
       transports: ["websocket"],
-      autoConnect: true,
     });
 
     setSocket(newSocket);
 
     newSocket.on("connect", () => {
+      console.log("🔗 Joined room:", realRoomId);
       newSocket.emit("join_room", realRoomId);
     });
 
@@ -106,13 +99,43 @@ useEffect(() => {
 
     return () => {
       newSocket.disconnect();
-      setSocket(null);
     };
+  }, [valid]);
+
+  // -------------------------------
+  // 3️⃣ LOAD EXISTING MOVIE
+  // -------------------------------
+  useEffect(() => {
+    if (valid !== true || !realRoomId) return;
+
+    const load = async () => {
+      try {
+        const res = await fetch(
+          `https://eclipsera.zeabur.app/api/movieupload/${realRoomId}?t=${Date.now()}`
+        );
+
+        const data = await res.json();
+
+        if (data.success && data.video?.hlsUrl) {
+          console.log("🎬 Movie loaded:", data.video.hlsUrl);
+          setVideoUrl(data.video.hlsUrl);
+          setFileKey(data.video.fileKey);
+        } else {
+          console.log("📭 No movie for this room.");
+        }
+      } catch (err) {
+        console.error("Movie load error:", err.message);
+      }
+    };
+
+    load();
   }, [valid, realRoomId]);
 
- 
+  // -------------------------------
+  // 4️⃣ SEND CHAT MESSAGE
+  // -------------------------------
   const handleSend = () => {
-    if (!input.trim() || !socket) return;
+    if (!socket || !input.trim()) return;
 
     const msg = { text: input, sender: "me" };
     setMessages((p) => [...p, msg]);
@@ -128,34 +151,9 @@ useEffect(() => {
 
   const handleKeyDown = (e) => e.key === "Enter" && handleSend();
 
-  // ---------------------------------------------
-  // 🎬 Load existing movie (on refresh)
-  // ---------------------------------------------
-  useEffect(() => {
-    if (valid !== true || !realRoomId) return;
-
-    const load = async () => {
-      try {
-        const res = await fetch(
-          `https://eclipsera.zeabur.app/api/movieupload/${realRoomId}`
-        );
-        const data = await res.json();
-
-        if (data.success && data.video?.hlsUrl) {
-          setVideoUrl(data.video.hlsUrl);
-          setFileKey(data.video.fileKey);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    load();
-  }, [valid, realRoomId]);
-
-  // ---------------------------------------------
-  // ⬆️ Upload + Convert Movie
-  // ---------------------------------------------
+  // -------------------------------
+  // 5️⃣ UPLOAD + CONVERT MOVIE
+  // -------------------------------
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -172,14 +170,13 @@ useEffect(() => {
 
     try {
       setUploading(true);
-      setStatusMessages(["🚀 Upload started...", "Don’t refresh"]);
+      setStatusMessages(["🚀 Uploading...", "Don't refresh"]);
 
       const res = await fetch("https://eclipsera.zeabur.app/api/upload-url");
       const { uploadURL, fileKey: key } = await res.json();
 
       setFileKey(key);
 
-      // Upload to S3
       await fetch(uploadURL, {
         method: "PUT",
         headers: { "Content-Type": file.type },
@@ -188,9 +185,7 @@ useEffect(() => {
 
       setStatusMessages((p) => [...p, "🎬 Converting..."]);
 
-      // TLS-SAFE URL
-const movieUrl =
- `https://s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${process.env.NEXT_PUBLIC_AWS_BUCKET}/${key}`;
+      const movieUrl = `https://${process.env.NEXT_PUBLIC_AWS_BUCKET}.s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${key}`;
 
       const convert = await fetch(
         "https://eclipsera.zeabur.app/api/movieupload/process",
@@ -205,21 +200,21 @@ const movieUrl =
 
       if (data.success) {
         setVideoUrl(data.hlsUrl);
-        setStatusMessages((p) => [...p, "🍿 Movie Ready"]);
+        setStatusMessages((p) => [...p, "🍿 Ready to watch"]);
       } else {
         setStatusMessages((p) => [...p, "❌ Conversion failed"]);
       }
     } catch (err) {
-      console.error(err);
-      setStatusMessages(["💥 Upload failed"]);
+      console.error("Upload error:", err.message);
+      setStatusMessages(["💥 Upload error"]);
     } finally {
       setUploading(false);
     }
   };
 
-  // ---------------------------------------------
-  // 🗑 Delete Movie
-  // ---------------------------------------------
+  // -------------------------------
+  // 6️⃣ DELETE MOVIE
+  // -------------------------------
   const handleDelete = () => {
     setPopup({
       visible: true,
@@ -246,17 +241,17 @@ const movieUrl =
     });
   };
 
-  // ---------------------------------------------
-  // 🕵 ROOM STATUS
-  // ---------------------------------------------
+  // -------------------------------
+  // ROOM STATUS UI
+  // -------------------------------
   if (valid === null)
     return <p className="text-white text-center mt-10">Checking room…</p>;
 
   if (valid === false) return null;
 
-  // ---------------------------------------------
-  // 🎨 UI BELOW
-  // ---------------------------------------------
+  // -------------------------------
+  // 7️⃣ UI (same as before)
+  // -------------------------------
   return (
     <div className="w-full min-h-screen bg-[#0D0D0E] text-white flex flex-col">
       {/* TOP BAR */}
@@ -288,7 +283,7 @@ const movieUrl =
           {uploading && (
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center">
               {statusMessages.map((msg, i) => (
-                <p key={i} className="text-white/80">{msg}</p>
+                <p key={i} className="text-white/90">{msg}</p>
               ))}
             </div>
           )}
@@ -296,7 +291,7 @@ const movieUrl =
 
         {/* CHAT + UPLOAD */}
         <div className="w-full lg:w-[30%] bg-[#151515] rounded-2xl p-3 flex flex-col">
-          {/* Upload / Delete */}
+          {/* Upload/Delete */}
           <div className="p-3 border-b border-[#1C1C1C] flex flex-col items-center">
             {videoUrl ? (
               <button
@@ -317,14 +312,14 @@ const movieUrl =
                   id="fileInput"
                   type="file"
                   className="hidden"
-                  onChange={handleFileUpload}
                   accept="video/*"
+                  onChange={handleFileUpload}
                 />
               </>
             )}
           </div>
 
-          {/* Chat Messages */}
+          {/* CHAT MESSAGES */}
           <div className="flex-1 mt-3 space-y-2 overflow-y-auto">
             {messages.map((msg, i) => (
               <div
@@ -338,7 +333,7 @@ const movieUrl =
             ))}
           </div>
 
-          {/* Chat Input */}
+          {/* CHAT INPUT */}
           <div className="flex items-center gap-2 mt-3">
             <input
               value={input}
