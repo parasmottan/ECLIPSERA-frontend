@@ -191,7 +191,9 @@ export default function Page({ params }) {
 
       setStatusMessages((p) => [...p, "🎬 Converting…"]);
 
-      const movieUrl = `https://${process.env.NEXT_PUBLIC_AWS_BUCKET}.s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${key}`;
+
+const movieUrl = `https://s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${process.env.NEXT_PUBLIC_AWS_BUCKET}/${key}`;
+
 
       const convert = await fetch(
         "https://eclipsera.zeabur.app/api/movieupload/process",
