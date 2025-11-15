@@ -13,7 +13,9 @@ const cinzel = Cinzel({
 });
 
 export default function Page({ params }) {
-  const { roomId } = React.use(params);
+  // ---- FIX: correctly read roomId from params
+  const { roomId } = params;
+
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [socket, setSocket] = useState(null);
@@ -38,24 +40,55 @@ export default function Page({ params }) {
           `https://eclipsera.zeabur.app/api/createroom/${roomId}`
         );
         if (res.status === 200) setValid(true);
-      } catch {
+        else {
+          setValid(false);
+          router.push("/");
+        }
+      } catch (err) {
         setValid(false);
         router.push("/");
       }
     };
+
+    if (!roomId) {
+      setValid(false);
+      router.push("/");
+      return;
+    }
+
     verifyRoom();
   }, [roomId, router]);
 
   // ✅ Socket Setup
   useEffect(() => {
-    if (!valid) return;
-      const newSocket = io("https://eclipsera.zeabur.app");
-      setSocket(newSocket);
-    newSocket.emit("join_room", roomId);
-    newSocket.on("receive_message", (data) =>
-      setMessages((p) => [...p, data])
-    );
-    return () => newSocket.disconnect();
+    if (valid !== true) return;
+
+    const newSocket = io("https://eclipsera.zeabur.app", {
+      transports: ["websocket"],
+      autoConnect: true,
+    });
+
+    setSocket(newSocket);
+
+    // join only after connected to avoid undefined room join
+    const handleConnect = () => {
+      if (roomId) newSocket.emit("join_room", roomId);
+    };
+
+    newSocket.on("connect", handleConnect);
+
+    const receiveHandler = (data) => setMessages((p) => [...p, data]);
+    newSocket.on("receive_message", receiveHandler);
+
+    // cleanup
+    return () => {
+      newSocket.off("connect", handleConnect);
+      newSocket.off("receive_message", receiveHandler);
+      try {
+        newSocket.disconnect();
+      } catch (e) {}
+      setSocket(null);
+    };
   }, [valid, roomId]);
 
   const handleSend = () => {
@@ -70,6 +103,7 @@ export default function Page({ params }) {
   // 🧠 Fetch existing movie
   useEffect(() => {
     if (!valid || !roomId) return;
+
     const fetchRoomVideo = async () => {
       try {
         const res = await fetch(
@@ -95,6 +129,32 @@ export default function Page({ params }) {
     const file = e.target.files[0];
     if (!file) return;
 
+    // Prevent duplicate uploads while processing or when movie already exists
+    if (uploading || videoUrl) {
+      setPopup({
+        visible: true,
+        type: "info",
+        message: videoUrl
+          ? "A movie is already available for this room. Delete it first to upload a new one."
+          : "A movie upload is already in progress. Please wait.",
+        onConfirm: () => setPopup({ visible: false }),
+      });
+      e.target.value = "";
+      return;
+    }
+
+    // Basic type check
+    if (!file.type || !file.type.startsWith("video")) {
+      setPopup({
+        visible: true,
+        type: "warning",
+        message: "Please upload a valid video file.",
+        onConfirm: () => setPopup({ visible: false }),
+      });
+      e.target.value = "";
+      return;
+    }
+
     const maxSize = 3 * 1024 * 1024 * 1024; // 3GB
     if (file.size > maxSize) {
       setPopup({
@@ -115,18 +175,19 @@ export default function Page({ params }) {
         "Please don’t refresh this page!",
       ]);
 
-      const res = await fetch(
-        "https://eclipsera.zeabur.app/api/upload-url"
-      );
-      const { uploadURL, fileKey } = await res.json();
-      setFileKey(fileKey);
+      // get signed upload url
+      const res = await fetch("https://eclipsera.zeabur.app/api/upload-url");
+      if (!res.ok) throw new Error("Failed to get upload URL");
+      const { uploadURL, fileKey: returnedFileKey } = await res.json();
+      setFileKey(returnedFileKey);
 
       setStatusMessages((p) => [...p, "📤 Uploading movie to cloud..."]);
 
       const start = Date.now();
+      // use the file's real type for Content-Type
       await fetch(uploadURL, {
         method: "PUT",
-        headers: { "Content-Type": "video/mp4" },
+        headers: { "Content-Type": file.type || "application/octet-stream" },
         body: file,
       });
       const elapsed = ((Date.now() - start) / 1000).toFixed(1);
@@ -136,7 +197,10 @@ export default function Page({ params }) {
         "🎬 Starting conversion...",
       ]);
 
-      const movieUrl = `https://s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${process.env.NEXT_PUBLIC_AWS_BUCKET}/${fileKey}`;
+      // Build the movieUrl using NEXT_PUBLIC env vars (client-safe)
+      const movieUrl = `https://${process.env.NEXT_PUBLIC_AWS_BUCKET}.s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${returnedFileKey}`;
+
+      // Request processing
       const convertRes = await fetch(
         "https://eclipsera.zeabur.app/api/movieupload/process",
         {
@@ -146,30 +210,76 @@ export default function Page({ params }) {
         }
       );
 
-      setStatusMessages((p) => [
-        ...p,
-        "⚙️ Processing your movie, please wait...",
-      ]);
-
+      // If server returned 202 (processing) or 200 (ready)
       const data = await convertRes.json();
-      if (data.success) {
+
+      if (convertRes.status === 202 || (data && data.status === "processing")) {
+        setStatusMessages((p) => [
+          ...p,
+          "⚙️ Processing your movie on the server. This may take a few seconds.",
+        ]);
+
+        // Poll for status until ready (simple polling every 3s, timeout 5 min)
+        const pollUntilReady = async () => {
+          const startPoll = Date.now();
+          while (Date.now() - startPoll < 5 * 60 * 1000) {
+            await new Promise((r) => setTimeout(r, 3000));
+            try {
+              const st = await fetch(
+                `https://eclipsera.zeabur.app/api/movieupload/${roomId}`
+              );
+              const json = await st.json();
+              if (json.success && json.video?.hlsUrl) {
+                setStatusMessages((p) => [
+                  ...p,
+                  "✅ Conversion completed!",
+                  "🍿 Movie is ready to stream!",
+                ]);
+                setVideoUrl(json.video.hlsUrl);
+                setFileKey(json.video.fileKey);
+                return;
+              }
+              // still not ready, continue polling
+            } catch (err) {
+              console.warn("Poll error:", err);
+            }
+          }
+          // Timeout
+          setStatusMessages((p) => [
+            ...p,
+            "❌ Conversion timed out. Please check server logs or try again later.",
+          ]);
+        };
+
+        await pollUntilReady();
+      } else if (convertRes.ok && data.success) {
+        // immediate ready
         setStatusMessages((p) => [
           ...p,
           "✅ Conversion completed!",
           "🍿 Movie is ready to stream!",
         ]);
-        setVideoUrl(data.hlsUrl);
+        setVideoUrl(data.hlsUrl || data.hlsUrl); // fallback
       } else {
         setStatusMessages((p) => [
           ...p,
-          "❌ Conversion failed, please try again.",
+          "❌ Conversion failed or returned unexpected response. Check logs.",
         ]);
       }
     } catch (err) {
       console.error("Upload Error:", err);
       setStatusMessages(["💥 Something went wrong during upload!"]);
+      setPopup({
+        visible: true,
+        type: "warning",
+        message: `Upload/Processing error: ${err.message}`,
+        onConfirm: () => setPopup({ visible: false }),
+      });
     } finally {
       setUploading(false);
+      // clear file input (if present)
+      const fi = document.getElementById("fileInput");
+      if (fi) fi.value = "";
     }
   };
 
@@ -358,6 +468,13 @@ export default function Page({ params }) {
                 >
                   🗑️ Delete Movie
                 </button>
+              ) : uploading ? (
+                <button
+                  disabled
+                  className="px-6 py-2 bg-gray-700/60 text-sm font-medium rounded-full flex items-center justify-center gap-2 cursor-not-allowed opacity-60"
+                >
+                  ⏳ Processing...
+                </button>
               ) : (
                 <>
                   <label
@@ -371,6 +488,7 @@ export default function Page({ params }) {
                     type="file"
                     className="hidden"
                     onChange={handleFileUpload}
+                    accept="video/*"
                   />
                   <p className="text-[11px] text-white/40 mt-2">
                     Max upload size: 3GB
