@@ -16,7 +16,7 @@ import {
   Send,
 } from "lucide-react";
 
-const socket = io("https://eclipsera-backend.zeabur.internal");
+const socket = io("https://eclipsera.zeabur.app");
 
 export default function NetflixPlayer({ src, roomId }) {
   const videoRef = useRef(null);
