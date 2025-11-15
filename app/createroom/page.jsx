@@ -52,7 +52,7 @@ function Page() {
         <h1
           className={`text-[clamp(1rem,1.5vw,1.8rem)] text-center cursor-pointer ${cinzel.variable} font-serif`}
         >
-          ECLIPSERA
+          VELOURA
         </h1>
 
         <Link href="/">

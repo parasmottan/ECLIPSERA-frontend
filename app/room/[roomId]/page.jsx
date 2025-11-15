@@ -281,7 +281,7 @@ export default function Page({ params }) {
           <h1>Leave</h1>
         </div>
 
-        <h1 className={`font-bold ${cinzel.variable}`}>ECLIPSERA</h1>
+        <h1 className={`font-bold ${cinzel.variable}`}>VELOURA</h1>
 
         <div className="px-3 py-1 bg-[#1A1A1A] rounded-full">
           Room: {realRoomId}
