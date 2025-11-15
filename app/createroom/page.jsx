@@ -134,28 +134,14 @@ function Page() {
             <button
               type="submit"
               disabled={!roomCode}
-              className={`w-full sm:w-[70%] md:w-[55%] mx-auto h-[clamp(2.8rem,3.5vw,3.8rem)] flex justify-center items-center gap-3 rounded-xl transition text-[clamp(0.9rem,1vw,1.1rem)] font-medium ${
+              className={`whitespace-nowrap px-5 w-full sm:w-[70%] md:w-[55%] mx-auto h-[clamp(2.8rem,3.5vw,3.8rem)] flex justify-center items-center gap-3 rounded-xl transition text-[clamp(0.9rem,1vw,1.1rem)] font-medium ${
                 roomCode
                   ? "bg-[#E50B16] hover:bg-[#ff202b]"
                   : "bg-gray-700 cursor-not-allowed"
               }`}
             >
               ENTER CINEMA
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="clamp(16,1.5vw,20)"
-                height="clamp(16,1.5vw,20)"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="lucide lucide-arrow-right"
-              >
-                <path d="M5 12h14"></path>
-                <path d="m12 5 7 7-7 7"></path>
-              </svg>
+            
             </button>
           </Link>
         </form>
