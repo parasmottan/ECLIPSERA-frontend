@@ -27,7 +27,6 @@ export default function Page({ params }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
 
-  // POPUP (same)
   const [popup, setPopup] = useState({
     visible: false,
     type: "",
@@ -36,41 +35,50 @@ export default function Page({ params }) {
   });
 
   // ---------------------------------------------
-  // 1️⃣ VERIFY ROOM (stable)
+  // 1️⃣ FINAL BUG-FREE VERIFY ROOM
   // ---------------------------------------------
   useEffect(() => {
     if (!realRoomId) return;
 
     let cancelled = false;
 
-    const verify = async () => {
+    const verifyRoom = async () => {
       try {
         const res = await fetch(
           `https://eclipsera.zeabur.app/api/createroom/${realRoomId}`
         );
+
         if (cancelled) return;
 
         const data = await res.json();
 
-        if (data.success === false) {
+        // ❗ REAL condition: backend returns success:false for invalid room
+        if (data?.success === false) {
+          console.log("❌ Invalid room, redirecting...");
           setValid(false);
           router.push("/");
           return;
         }
 
+        // ✔ Room exists
         setValid(true);
       } catch (err) {
         console.log("Room verify error:", err.message);
+
+        // DON’T redirect on TEMPORARY errors
         setValid(null);
       }
     };
 
-    verify();
-    return () => (cancelled = true);
+    verifyRoom();
+
+    return () => {
+      cancelled = true;
+    };
   }, [realRoomId]);
 
   // ---------------------------------------------
-  // 2️⃣ SOCKET CONNECTION + REALTIME VIDEO EVENTS
+  // 2️⃣ SOCKET CONNECTION + REALTIME VIDEO
   // ---------------------------------------------
   useEffect(() => {
     if (valid !== true || !realRoomId) return;
@@ -83,36 +91,30 @@ export default function Page({ params }) {
     setSocket(newSocket);
 
     newSocket.on("connect", () => {
-      console.log("🔗 Connected to room:", realRoomId);
+      console.log("🔗 Connected:", realRoomId);
       newSocket.emit("join_room", realRoomId);
     });
 
-    // 🎥 When server sends existing movie to NEW JOINER
     newSocket.on("video_ready", (hlsUrl) => {
-      console.log("🎥 REALTIME: video_ready received:", hlsUrl);
+      console.log("🎥 Real-time video ready:", hlsUrl);
       setVideoUrl(hlsUrl);
     });
 
-    // 🗑 When someone deletes movie
     newSocket.on("video_deleted", () => {
-      console.log("🗑 REALTIME: delete received");
+      console.log("🗑 Real-time delete");
       setVideoUrl(null);
       setFileKey(null);
     });
 
-    // 💬 chat messages
     newSocket.on("receive_message", (data) =>
       setMessages((prev) => [...prev, data])
     );
 
-    return () => {
-      newSocket.disconnect();
-      setSocket(null);
-    };
+    return () => newSocket.disconnect();
   }, [valid, realRoomId]);
 
   // ---------------------------------------------
-  // 3️⃣ LOAD EXISTING MOVIE (Frontend refresh / other user join)
+  // 3️⃣ LOAD EXISTING MOVIE (Refresh or New User Join)
   // ---------------------------------------------
   useEffect(() => {
     if (valid !== true || !realRoomId) return;
@@ -125,12 +127,12 @@ export default function Page({ params }) {
         const data = await res.json();
 
         if (data.success && data.video?.hlsUrl) {
-          console.log("🎬 Existing video loaded:", data.video.hlsUrl);
+          console.log("🎬 Existing movie loaded:", data.video.hlsUrl);
           setVideoUrl(data.video.hlsUrl);
           setFileKey(data.video.fileKey);
         }
       } catch (err) {
-        console.error("Loading existing movie failed:", err.message);
+        console.error("Movie load failed:", err.message);
       }
     };
 
@@ -138,7 +140,7 @@ export default function Page({ params }) {
   }, [valid, realRoomId]);
 
   // ---------------------------------------------
-  // 4️⃣ SEND CHAT
+  // 4️⃣ CHAT
   // ---------------------------------------------
   const handleSend = () => {
     if (!socket || !input.trim()) return;
@@ -158,7 +160,7 @@ export default function Page({ params }) {
   const handleKeyDown = (e) => e.key === "Enter" && handleSend();
 
   // ---------------------------------------------
-  // 5️⃣ UPLOAD + CONVERSION + REALTIME BROADCAST
+  // 5️⃣ UPLOAD + CONVERT + REALTIME BROADCAST
   // ---------------------------------------------
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -176,7 +178,7 @@ export default function Page({ params }) {
 
     try {
       setUploading(true);
-      setStatusMessages(["🚀 Uploading…", "Please wait"]);
+      setStatusMessages(["🚀 Uploading…"]);
 
       const res = await fetch("https://eclipsera.zeabur.app/api/upload-url");
       const { uploadURL, fileKey: key } = await res.json();
@@ -191,9 +193,7 @@ export default function Page({ params }) {
 
       setStatusMessages((p) => [...p, "🎬 Converting…"]);
 
-
-const movieUrl = `https://s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${process.env.NEXT_PUBLIC_AWS_BUCKET}/${key}`;
-
+      const movieUrl = `https://s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${process.env.NEXT_PUBLIC_AWS_BUCKET}/${key}`;
 
       const convert = await fetch(
         "https://eclipsera.zeabur.app/api/movieupload/process",
@@ -210,7 +210,6 @@ const movieUrl = `https://s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com
         setVideoUrl(data.hlsUrl);
         setStatusMessages((p) => [...p, "🍿 Ready"]);
 
-        // ⭐ BROADCAST TO OTHERS USING SOCKET
         socket.emit("video_ready", {
           roomId: realRoomId,
           hlsUrl: data.hlsUrl,
@@ -219,15 +218,15 @@ const movieUrl = `https://s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com
         setStatusMessages((p) => [...p, "❌ Conversion failed"]);
       }
     } catch (err) {
-      console.error("Upload/convert error:", err.message);
-      setStatusMessages(["💥 Failed"]);
+      console.error(err);
+      setStatusMessages(["💥 Upload failed"]);
     } finally {
       setUploading(false);
     }
   };
 
   // ---------------------------------------------
-  // 6️⃣ DELETE MOVIE (Realtime)
+  // 6️⃣ DELETE MOVIE
   // ---------------------------------------------
   const handleDelete = () => {
     setPopup({
@@ -251,26 +250,22 @@ const movieUrl = `https://s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com
           setVideoUrl(null);
           setFileKey(null);
 
-          // ⭐ INFORM OTHER USERS
           socket.emit("video_deleted", { roomId: realRoomId });
         }
       },
     });
   };
 
-  // ---------------------------------------------
-  // STATUS UI
-  // ---------------------------------------------
+  // STATUS
   if (valid === null)
     return <p className="text-white text-center mt-10">Checking room…</p>;
   if (valid === false) return null;
 
   // ---------------------------------------------
-  // UI (same)
+  // UI
   // ---------------------------------------------
   return (
     <div className="w-full min-h-screen bg-[#0D0D0E] text-white flex flex-col">
-      {/* TOP BAR */}
       <div className="w-full h-[4rem] flex justify-between items-center px-[3vw] bg-[#0D0D0E]/90 border-b border-white/5 backdrop-blur-md">
         <div
           onClick={() => router.push("/")}
@@ -290,9 +285,7 @@ const movieUrl = `https://s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com
         </div>
       </div>
 
-      {/* MAIN */}
       <div className="flex flex-col lg:flex-row w-full flex-1 p-[2vw] gap-[2vw]">
-        {/* PLAYER */}
         <div className="w-full lg:w-[70%] bg-[#101010] rounded-2xl p-[3px] shadow-lg relative">
           <NetflixPlayer src={videoUrl} roomId={realRoomId} />
 
@@ -305,9 +298,7 @@ const movieUrl = `https://s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com
           )}
         </div>
 
-        {/* CHAT + UPLOAD */}
         <div className="w-full lg:w-[30%] bg-[#151515] rounded-2xl p-3 flex flex-col">
-          {/* Upload/Delete */}
           <div className="p-3 border-b border-[#1C1C1C] flex flex-col items-center">
             {videoUrl ? (
               <button
@@ -335,7 +326,6 @@ const movieUrl = `https://s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com
             )}
           </div>
 
-          {/* CHAT */}
           <div className="flex-1 mt-3 space-y-2 overflow-y-auto">
             {messages.map((msg, i) => (
               <div
@@ -349,7 +339,6 @@ const movieUrl = `https://s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com
             ))}
           </div>
 
-          {/* Chat Input */}
           <div className="flex items-center gap-2 mt-3">
             <input
               value={input}
