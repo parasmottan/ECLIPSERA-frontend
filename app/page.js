@@ -37,6 +37,7 @@ export default function Home() {
 
   return (
     <div className="relative w-full h-screen bg-[#0D0D0E] text-white overflow-hidden flex flex-col">
+
       {/* 🟢 Navbar */}
       <div className="w-full h-20 absolute flex justify-between items-center top-0 px-[clamp(1rem,3vw,3rem)] z-20">
         <h1
@@ -93,7 +94,26 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 🔴 Join Room Card */}
+      {/* ✅ NEW PROFESSIONAL FOOTER */}
+      <footer className="absolute bottom-0 w-full flex flex-col items-center justify-center pb-4 text-center gap-1">
+
+        {/* Backend Info */}
+        <p className="text-white/40 text-[clamp(0.7rem,0.85vw,1rem)] px-3">
+          Backend is running on a free tier — waking up may take up to 50 seconds.
+        </p>
+
+        {/* Name Credit */}
+        <p className="text-white/30 text-[clamp(0.7rem,0.85vw,1rem)]">
+          Built with ❤️ by <span className="text-white/50 font-medium">Paras Mottan</span>
+        </p>
+
+        {/* Copyright */}
+        <p className="text-white/30 text-[clamp(0.7rem,0.85vw,1rem)] mt-1">
+          © 2024 Eclipsera — All rights reserved.
+        </p>
+      </footer>
+
+      {/* JOIN ROOM CARD */}
       {showJoinCard && (
         <div
           id="overlay"
@@ -147,7 +167,6 @@ export default function Home() {
         }
 
         @media (min-width: 2560px) {
-          /* 4K TV / UltraWide scaling */
           .4k\\:max-w\\[60\\%\\] {
             max-width: 60%;
           }
