@@ -280,10 +280,200 @@ export default function Page({ params }) {
   if (!valid) return null;
 
   return (
-    <div className="w-full min-h-screen bg-[#0D0D0E] text-white flex flex-col overflow-hidden relative">
-      {/* UI remains same */}
-      {/* I did not touch any UI code */}
-      {/* Only the movieUrl line was fixed */}
+     <div
+      className="w-full min-h-screen bg-[#0D0D0E] text-white flex flex-col overflow-hidden relative"
+      style={{ fontSize: "clamp(14px, 0.9vw, 18px)" }}
+    >
+      {/* 🌫️ Global Popup */}
+      {popup.visible && (
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
+          <div className="bg-[#181818] border border-white/10 rounded-2xl p-6 w-[90%] sm:w-[400px] text-center shadow-2xl animate-scaleIn">
+            <p className="text-white/90 text-base mb-4">{popup.message}</p>
+            <div className="flex justify-center gap-4">
+              {popup.type === "confirm" && (
+                <button
+                  onClick={() => setPopup({ visible: false })}
+                  className="px-4 py-2 rounded-full bg-gray-700 text-white/80 hover:bg-gray-600 transition"
+                >
+                  Cancel
+                </button>
+              )}
+              <button
+                onClick={popup.onConfirm}
+                className={`px-4 py-2 rounded-full ${
+                  popup.type === "warning" || popup.type === "confirm"
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-gray-600 hover:bg-gray-700"
+                } text-white transition`}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🔝 TOP BAR */}
+      <div
+        className="w-full h-[4rem] flex justify-between items-center px-[3vw] bg-[#0D0D0E]/90 border-b border-white/5 backdrop-blur-md z-40"
+        style={{ fontSize: "clamp(12px, 0.8vw, 16px)" }}
+      >
+        <div
+          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition"
+          onClick={() => router.push("/")}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#E5E5E5"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="m12 19-7-7 7-7"></path>
+            <path d="M19 12H5"></path>
+          </svg>
+          <h1>Leave</h1>
+        </div>
+
+        <h1
+          className={`font-bold ${cinzel.variable}`}
+          style={{ fontSize: "clamp(16px, 1vw, 24px)" }}
+        >
+          ECLIPSERA
+        </h1>
+
+        <div
+          className="px-3 py-1 bg-[#1A1A1A] rounded-full"
+          style={{ fontSize: "clamp(10px, 0.7vw, 14px)" }}
+        >
+          Room: {roomId}
+        </div>
+      </div>
+
+      {/* ⚡ MAIN SECTION */}
+      <div className="flex flex-col lg:flex-row w-full flex-1 mt-2 md:mt-4 p-[2vw] gap-[2vw] h-[calc(100vh-56px)] overflow-hidden">
+        {/* 🎬 PLAYER */}
+        <div className="w-full lg:w-[70%] bg-[#101010] rounded-2xl p-[3px] shadow-lg flex items-center justify-center relative aspect-video max-h-[90vh]">
+          <div className="w-full h-full rounded-xl overflow-hidden">
+            <NetflixPlayer src={videoUrl} roomId={roomId} />
+          </div>
+
+          {/* Uploading Overlay */}
+          {uploading && (
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col justify-center items-center text-center p-4 sm:p-6 md:p-8 overflow-hidden z-50">
+              <div className="flex flex-col items-center w-[90%] sm:w-[80%] md:w-[70%] lg:w-[60%] xl:w-[40%] max-w-[600px]">
+                <h1
+                  className="font-semibold text-white/90 mb-3 sm:mb-4"
+                  style={{ fontSize: "clamp(14px, 2.5vw, 20px)" }}
+                >
+                  🎥 Uploading & Processing
+                </h1>
+
+                <div className="flex flex-col gap-1 sm:gap-2 w-full">
+                  {statusMessages.map((msg, i) => (
+                    <p
+                      key={i}
+                      className="text-white/70 animate-pulse leading-snug break-words"
+                      style={{
+                        fontSize: "clamp(12px, 2vw, 16px)",
+                        animationDelay: `${i * 0.3}s`,
+                      }}
+                    >
+                      {msg}
+                    </p>
+                  ))}
+                </div>
+
+                <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-white border-t-transparent rounded-full animate-spin mt-5 sm:mt-6"></div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 💬 CHAT PANEL */}
+        <div
+          className="w-full lg:w-[30%] flex flex-col bg-[#151515] rounded-2xl shadow-lg overflow-hidden max-h-[90vh]"
+          style={{ fontSize: "clamp(13px, 0.9vw, 16px)" }}
+        >
+          <div className="bg-[#151515] rounded-xl flex flex-col justify-between overflow-hidden h-full">
+            {/* Upload/Delete */}
+            <div className="p-3 border-b border-[#1C1C1C] flex flex-col justify-center items-center">
+              {videoUrl ? (
+                <button
+                  onClick={handleDelete}
+                  className="px-6 py-2 bg-gradient-to-r from-gray-700 to-gray-600 text-sm font-medium rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-gray-800/40 transition-all"
+                >
+                  🗑️ Delete Movie
+                </button>
+              ) : uploading ? (
+                <button
+                  disabled
+                  className="px-6 py-2 bg-gray-700/60 text-sm font-medium rounded-full flex items-center justify-center gap-2 cursor-not-allowed opacity-60"
+                >
+                  ⏳ Processing...
+                </button>
+              ) : (
+                <>
+                  <label
+                    htmlFor="fileInput"
+                    className="px-6 py-2 bg-gradient-to-r from-red-600 to-red-500 text-sm font-medium rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-red-700/40 transition-all"
+                  >
+                    ⬆️ Upload
+                  </label>
+                  <input
+                    id="fileInput"
+                    type="file"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                    accept="video/*"
+                  />
+                  <p className="text-[11px] text-white/40 mt-2">
+                    Max upload size: 3GB
+                  </p>
+                </>
+              )}
+            </div>
+
+            {/* Chat Messages */}
+            <div className="flex-1 p-3 overflow-y-auto scrollbar-thin scrollbar-thumb-[#333] scrollbar-track-[#1A1A1A] space-y-2">
+              {messages.map((msg, i) => (
+                <div
+                  key={i}
+                  className={`max-w-[75%] px-4 py-2 rounded-2xl ${
+                    msg.sender === "me"
+                      ? "bg-[#3A3A3A] self-end ml-auto"
+                      : "bg-[#202020] self-start"
+                  }`}
+                >
+                  {msg.text}
+                </div>
+              ))}
+            </div>
+
+            {/* Chat Input */}
+            <div className="p-3 border-t border-[#1C1C1C] flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="Your message..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="flex-1 rounded-full bg-[#1C1C1C] text-sm px-4 py-2 text-white/80 focus:outline-none"
+              />
+              <button
+                onClick={handleSend}
+                className="p-2 hover:bg-[#2A2A2A] rounded-full transition"
+              >
+                ➤
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
