@@ -2,357 +2,351 @@
 import React, { useState, useEffect } from "react";
 import { Cinzel } from "next/font/google";
 import NetflixPlayer from "../../components/NetflixPlayer";
+import axios from "axios";
 import { useRouter } from "next/navigation";
 import { io } from "socket.io-client";
 
 const cinzel = Cinzel({
-  variable: "--font-cinzel",
-  subsets: ["latin"],
-  weight: ["400", "700"],
+  variable: "--font-cinzel",
+  subsets: ["latin"],
+  weight: ["400", "700"],
 });
 
 export default function Page({ params }) {
-  // SAFEST ROOMID
-  const realRoomId = params?.roomId
-    ? String(params.roomId).toLowerCase().trim()
-    : null;
+  // ---------------------------------------------
+  // 🛠 SAFE ROOM ID (prevents refresh crash)
+  // ---------------------------------------------
+  const realRoomId = params?.roomId
+    ? String(params.roomId).toLowerCase().trim()
+    : null;
 
-  const router = useRouter();
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [socket, setSocket] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [statusMessages, setStatusMessages] = useState([]);
+  const [videoUrl, setVideoUrl] = useState(null);
+  const [fileKey, setFileKey] = useState(null);
+  const [valid, setValid] = useState(null);
+  const [popup, setPopup] = useState({
+    visible: false,
+    type: "",
+    message: "",
+    onConfirm: null,
+  });
 
-  const [valid, setValid] = useState(null);
-  const [videoUrl, setVideoUrl] = useState(null);
-  const [fileKey, setFileKey] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [statusMessages, setStatusMessages] = useState([]);
-  const [socket, setSocket] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
+  const router = useRouter();
 
-  // POPUP
-  const [popup, setPopup] = useState({
-    visible: false,
-    type: "",
-    message: "",
-    onConfirm: null,
-  });
+  // ---------------------------------------------
+  // ✅ Verify Room (ONLY when realRoomId is available)
+  // ---------------------------------------------
+// ✅ SAFEST ROOM VERIFICATION (no wrong redirects)
+// ✅ SAFEST ROOM VERIFICATION (no wrong redirects)
+useEffect(() => {
+  if (!realRoomId) return;
 
-  // -------------------------------
-  // 1️⃣ VERIFY ROOM (Bug Fix Applied)
-  // -------------------------------
-  useEffect(() => {
-    if (!realRoomId) return;
+  let cancelled = false;
 
-    let cancelled = false;
+  const verifyRoom = async () => {
+    try {
+      const res = await fetch(
+        `https://eclipsera.zeabur.app/api/createroom/${realRoomId}`
+      );
 
-    const verify = async () => {
-      try {
-        const res = await fetch(
-          `https://eclipsera.zeabur.app/api/createroom/${realRoomId}`
-        );
+      if (cancelled) return;
 
-        if (cancelled) return;
+      const data = await res.json();
 
-        if (res.status === 404) {
-          setValid(false);
-          // ❌ router.push("/") ko yahaan se hata diya gaya hai.
-          return;
-        }
+      // ❗ REAL CHECK → backend returns { success: false } NOT 404
+      if (data.success === false) {
+        setValid(false);
+        router.push("/");
+        return;
+      }
 
-        if (res.status === 200) {
-          setValid(true);
-          return;
-        }
+      // ✔ room exists
+      setValid(true);
+    } catch (err) {
+      console.log("Room verify error:", err.message);
 
-        // random errors → 'Checking room...' par ruk jaayega
-        setValid(null);
-      } catch (err) {
-        console.error("Room verification failed:", err.message);
-        if (!cancelled) setValid(null);
-      }
-    };
+      // ❗ Do NOT redirect on server/network error
+      setValid(null);
+    }
+  };
 
-    verify();
-    return () => {
-      cancelled = true;
-    };
-  }, [realRoomId]);
+  verifyRoom();
 
-  // -------------------------------
-  // 2️⃣ SOCKET CONNECTION
-  // -------------------------------
-  useEffect(() => {
-    if (valid !== true || !realRoomId) return;
+  return () => {
+    cancelled = true;
+  };
+}, [realRoomId]);
 
-    const newSocket = io("https://eclipsera.zeabur.app", {
-      transports: ["websocket"],
-    });
 
-    setSocket(newSocket);
+  useEffect(() => {
+    if (valid !== true || !realRoomId) return;
 
-    newSocket.on("connect", () => {
-      console.log("🔗 Joined room:", realRoomId);
-      newSocket.emit("join_room", realRoomId);
-    });
+    const newSocket = io("https://eclipsera.zeabur.app", {
+      transports: ["websocket"],
+      autoConnect: true,
+    });
 
-    newSocket.on("receive_message", (data) =>
-      setMessages((prev) => [...prev, data])
-    );
+    setSocket(newSocket);
 
-    return () => {
-      newSocket.disconnect();
-    };
-  }, [valid, realRoomId]);
+    newSocket.on("connect", () => {
+      newSocket.emit("join_room", realRoomId);
+    });
 
-  // -------------------------------
-  // 3️⃣ LOAD EXISTING MOVIE
-  // -------------------------------
-  useEffect(() => {
-    if (valid !== true || !realRoomId) return;
+    newSocket.on("receive_message", (data) =>
+      setMessages((prev) => [...prev, data])
+    );
 
-    const load = async () => {
-      try {
-        const res = await fetch(
-          `https://eclipsera.zeabur.app/api/movieupload/${realRoomId}?t=${Date.now()}`
-        );
+    return () => {
+      newSocket.disconnect();
+      setSocket(null);
+    };
+  }, [valid, realRoomId]);
 
-        const data = await res.json();
+ 
+  const handleSend = () => {
+    if (!input.trim() || !socket) return;
 
-        if (data.success && data.video?.hlsUrl) {
-          console.log("🎬 Movie loaded:", data.video.hlsUrl);
-          setVideoUrl(data.video.hlsUrl);
-          setFileKey(data.video.fileKey);
-        } else {
-          console.log("📭 No movie for this room.");
-        }
-      } catch (err) {
-        console.error("Movie load error:", err.message);
-      }
-    };
+    const msg = { text: input, sender: "me" };
+    setMessages((p) => [...p, msg]);
 
-    load();
-  }, [valid, realRoomId]);
+    socket.emit("send_message", {
+      roomId: realRoomId,
+      text: input,
+      sender: "user",
+    });
 
-  // -------------------------------
-  // 4️⃣ SEND CHAT MESSAGE
-  // -------------------------------
-  const handleSend = () => {
-    if (!socket || !input.trim()) return;
+    setInput("");
+  };
 
-    const msg = { text: input, sender: "me" };
-    setMessages((p) => [...p, msg]);
+  const handleKeyDown = (e) => e.key === "Enter" && handleSend();
 
-    socket.emit("send_message", {
-      roomId: realRoomId,
-      text: input,
-      sender: "user",
-    });
+  // ---------------------------------------------
+  // 🎬 Load existing movie (on refresh)
+  // ---------------------------------------------
+  useEffect(() => {
+    if (valid !== true || !realRoomId) return;
 
-    setInput("");
-  };
+    const load = async () => {
+      try {
+        const res = await fetch(
+          `https://eclipsera.zeabur.app/api/movieupload/${realRoomId}`
+        );
+        const data = await res.json();
 
-  const handleKeyDown = (e) => e.key === "Enter" && handleSend();
+        if (data.success && data.video?.hlsUrl) {
+          setVideoUrl(data.video.hlsUrl);
+          setFileKey(data.video.fileKey);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-  // -------------------------------
-  // 5️⃣ UPLOAD + CONVERT MOVIE
-  // -------------------------------
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    load();
+  }, [valid, realRoomId]);
 
-    if (videoUrl) {
-      setPopup({
-        visible: true,
-        type: "warning",
-        message: "A movie already exists. Delete it first.",
-        onConfirm: () => setPopup({ visible: false }),
-      });
-      return;
-    }
+  // ---------------------------------------------
+  // ⬆️ Upload + Convert Movie
+  // ---------------------------------------------
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-    try {
-      setUploading(true);
-      setStatusMessages(["🚀 Uploading...", "Don't refresh"]);
+    if (videoUrl) {
+      setPopup({
+        visible: true,
+        type: "warning",
+        message: "A movie already exists. Delete it first.",
+        onConfirm: () => setPopup({ visible: false }),
+      });
+      return;
+    }
 
-      const res = await fetch("https://eclipsera.zeabur.app/api/upload-url");
-      const { uploadURL, fileKey: key } = await res.json();
+    try {
+      setUploading(true);
+      setStatusMessages(["🚀 Upload started...", "Don’t refresh"]);
 
-      setFileKey(key);
+      const res = await fetch("https://eclipsera.zeabur.app/api/upload-url");
+      const { uploadURL, fileKey: key } = await res.json();
 
-      await fetch(uploadURL, {
-        method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
+      setFileKey(key);
 
-      setStatusMessages((p) => [...p, "🎬 Converting..."]);
+      // Upload to S3
+      await fetch(uploadURL, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
 
-      // NOTE: Make sure these environment variables are correctly set in your project
-      const movieUrl = `https://${process.env.NEXT_PUBLIC_AWS_BUCKET}.s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${key}`;
+      setStatusMessages((p) => [...p, "🎬 Converting..."]);
 
-      const convert = await fetch(
-        "https://eclipsera.zeabur.app/api/movieupload/process",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ movieUrl, roomId: realRoomId }),
-        }
-      );
+      // TLS-SAFE URL
+const movieUrl =
+ `https://s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${process.env.NEXT_PUBLIC_AWS_BUCKET}/${key}`;
 
-      const data = await convert.json();
+      const convert = await fetch(
+        "https://eclipsera.zeabur.app/api/movieupload/process",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ movieUrl, roomId: realRoomId }),
+        }
+      );
 
-      if (data.success) {
-        setVideoUrl(data.hlsUrl);
-        setStatusMessages((p) => [...p, "🍿 Ready to watch"]);
-      } else {
-        setStatusMessages((p) => [...p, "❌ Conversion failed"]);
-      }
-    } catch (err) {
-      console.error("Upload error:", err.message);
-      setStatusMessages(["💥 Upload error"]);
-    } finally {
-      setUploading(false);
-    }
-  };
+      const data = await convert.json();
 
-  // -------------------------------
-  // 6️⃣ DELETE MOVIE
-  // -------------------------------
-  const handleDelete = () => {
-    setPopup({
-      visible: true,
-      type: "confirm",
-      message: "Delete movie permanently?",
-      onConfirm: async () => {
-        setPopup({ visible: false });
+      if (data.success) {
+        setVideoUrl(data.hlsUrl);
+        setStatusMessages((p) => [...p, "🍿 Movie Ready"]);
+      } else {
+        setStatusMessages((p) => [...p, "❌ Conversion failed"]);
+      }
+    } catch (err) {
+      console.error(err);
+      setStatusMessages(["💥 Upload failed"]);
+    } finally {
+      setUploading(false);
+    }
+  };
 
-        const res = await fetch(
-          "https://eclipsera.zeabur.app/api/movieupload/delete",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ fileKey }),
-          }
-        );
+  // ---------------------------------------------
+  // 🗑 Delete Movie
+  // ---------------------------------------------
+  const handleDelete = () => {
+    setPopup({
+      visible: true,
+      type: "confirm",
+      message: "Delete movie permanently?",
+      onConfirm: async () => {
+        setPopup({ visible: false });
 
-        const data = await res.json();
-        if (data.success) {
-          setVideoUrl(null);
-          setFileKey(null);
-        }
-      },
-    });
-  };
+        const res = await fetch(
+          "https://eclipsera.zeabur.app/api/movieupload/delete",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ fileKey }),
+          }
+        );
 
-  // -------------------------------
-  // ROOM STATUS UI (Bug Fix Applied)
-  // -------------------------------
-  if (valid === null)
-    return <p className="text-white text-center mt-10">Checking room…</p>;
+        const data = await res.json();
+        if (data.success) {
+          setVideoUrl(null);
+          setFileKey(null);
+        }
+      },
+    });
+  };
 
-  if (valid === false) {
-    // ✅ Agar room 404 hai, toh yahaan redirect karo.
-    // Isse extra renders ya non-404 errors se redirect nahi hoga.
-    router.push("/");
-    return null;
-  }
+  // ---------------------------------------------
+  // 🕵 ROOM STATUS
+  // ---------------------------------------------
+  if (valid === null)
+    return <p className="text-white text-center mt-10">Checking room…</p>;
 
-  // -------------------------------
-  // 7️⃣ UI (same as before)
-  // -------------------------------
-  return (
-    <div className="w-full min-h-screen bg-[#0D0D0E] text-white flex flex-col">
-      {/* TOP BAR */}
-      <div className="w-full h-[4rem] flex justify-between items-center px-[3vw] bg-[#0D0D0E]/90 border-b border-white/5 backdrop-blur-md">
-        <div
-          onClick={() => router.push("/")}
-          className="flex items-center gap-2 cursor-pointer hover:opacity-80"
-        >
-          <svg width="20" height="20" stroke="#E5E5E5" strokeWidth="2">
-            <path d="m12 19-7-7 7-7"></path>
-            <path d="M19 12H5"></path>
-          </svg>
-          <h1>Leave</h1>
-        </div>
+  if (valid === false) return null;
 
-        <h1 className={`font-bold ${cinzel.variable}`}>ECLIPSERA</h1>
+  // ---------------------------------------------
+  // 🎨 UI BELOW
+  // ---------------------------------------------
+  return (
+    <div className="w-full min-h-screen bg-[#0D0D0E] text-white flex flex-col">
+      {/* TOP BAR */}
+      <div className="w-full h-[4rem] flex justify-between items-center px-[3vw] bg-[#0D0D0E]/90 border-b border-white/5 backdrop-blur-md">
+        <div
+          onClick={() => router.push("/")}
+          className="flex items-center gap-2 cursor-pointer hover:opacity-80"
+        >
+          <svg width="20" height="20" stroke="#E5E5E5" strokeWidth="2">
+            <path d="m12 19-7-7 7-7"></path>
+            <path d="M19 12H5"></path>
+          </svg>
+          <h1>Leave</h1>
+        </div>
 
-        <div className="px-3 py-1 bg-[#1A1A1A] rounded-full">
-          Room: {realRoomId}
-        </div>
-      </div>
+        <h1 className={`font-bold ${cinzel.variable}`}>ECLIPSERA</h1>
 
-      {/* MAIN */}
-      <div className="flex flex-col lg:flex-row w-full flex-1 p-[2vw] gap-[2vw]">
-        {/* PLAYER */}
-        <div className="w-full lg:w-[70%] bg-[#101010] rounded-2xl p-[3px] shadow-lg relative">
-          <NetflixPlayer src={videoUrl} roomId={realRoomId} />
+        <div className="px-3 py-1 bg-[#1A1A1A] rounded-full">
+          Room: {realRoomId}
+        </div>
+      </div>
 
-          {uploading && (
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center">
-              {statusMessages.map((msg, i) => (
-                <p key={i} className="text-white/90">{msg}</p>
-              ))}
-            </div>
-          )}
-        </div>
+      {/* MAIN */}
+      <div className="flex flex-col lg:flex-row w-full flex-1 p-[2vw] gap-[2vw]">
+        {/* PLAYER */}
+        <div className="w-full lg:w-[70%] bg-[#101010] rounded-2xl p-[3px] shadow-lg relative">
+          <NetflixPlayer src={videoUrl} roomId={realRoomId} />
 
-        {/* CHAT + UPLOAD */}
-        <div className="w-full lg:w-[30%] bg-[#151515] rounded-2xl p-3 flex flex-col">
-          {/* Upload/Delete */}
-          <div className="p-3 border-b border-[#1C1C1C] flex flex-col items-center">
-            {videoUrl ? (
-              <button
-                onClick={handleDelete}
-                className="px-6 py-2 bg-gray-600 rounded-full"
-              >
-                🗑️ Delete Movie
-              </button>
-            ) : (
-              <>
-                <label
-                  htmlFor="fileInput"
-                  className="px-6 py-2 bg-red-600 rounded-full cursor-pointer"
-                >
-                  ⬆️ Upload
-                </label>
-                <input
-                  id="fileInput"
-                  type="file"
-                  className="hidden"
-                  accept="video/*"
-                  onChange={handleFileUpload}
-                />
-              </>
-            )}
-          </div>
+          {uploading && (
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center">
+              {statusMessages.map((msg, i) => (
+                <p key={i} className="text-white/80">{msg}</p>
+              ))}
+            </div>
+          )}
+        </div>
 
-          {/* CHAT MESSAGES */}
-          <div className="flex-1 mt-3 space-y-2 overflow-y-auto">
-            {messages.map((msg, i) => (
-              <div
-                key={i}
-                className={`px-4 py-2 rounded-xl ${
-                  msg.sender === "me" ? "bg-[#3A3A3A] ml-auto" : "bg-[#202020]"
-                }`}
-              >
-                {msg.text}
-              </div>
-            ))}
-          </div>
+        {/* CHAT + UPLOAD */}
+        <div className="w-full lg:w-[30%] bg-[#151515] rounded-2xl p-3 flex flex-col">
+          {/* Upload / Delete */}
+          <div className="p-3 border-b border-[#1C1C1C] flex flex-col items-center">
+            {videoUrl ? (
+              <button
+                onClick={handleDelete}
+                className="px-6 py-2 bg-gray-600 rounded-full"
+              >
+                🗑️ Delete Movie
+              </button>
+            ) : (
+              <>
+                <label
+                  htmlFor="fileInput"
+                  className="px-6 py-2 bg-red-600 rounded-full cursor-pointer"
+                >
+                  ⬆️ Upload
+                </label>
+                <input
+                  id="fileInput"
+                  type="file"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                  accept="video/*"
+                />
+              </>
+            )}
+          </div>
 
-          {/* CHAT INPUT */}
-          <div className="flex items-center gap-2 mt-3">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="flex-1 px-4 py-2 rounded-full bg-[#1C1C1C]"
-              placeholder="Message..."
-            />
-            <button onClick={handleSend}>➤</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+          {/* Chat Messages */}
+          <div className="flex-1 mt-3 space-y-2 overflow-y-auto">
+            {messages.map((msg, i) => (
+              <div
+                key={i}
+                className={`px-4 py-2 rounded-xl ${
+                  msg.sender === "me" ? "bg-[#3A3A3A] ml-auto" : "bg-[#202020]"
+                }`}
+              >
+                {msg.text}
+              </div>
+            ))}
+          </div>
+
+          {/* Chat Input */}
+          <div className="flex items-center gap-2 mt-3">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="flex-1 px-4 py-2 rounded-full bg-[#1C1C1C]"
+              placeholder="Message..."
+            />
+            <button onClick={handleSend}>➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
