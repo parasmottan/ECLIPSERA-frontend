@@ -40,7 +40,9 @@ export default function Page({ params }) {
   // ---------------------------------------------
   // ✅ Verify Room (ONLY when realRoomId is available)
   // ---------------------------------------------
-// ✅ SAFEST ROOM VERIFICATION (no wrong redirects)
+
+
+  // ✅ SAFEST ROOM VERIFICATION (no wrong redirects)
 useEffect(() => {
   if (!realRoomId) return;
 
@@ -54,24 +56,22 @@ useEffect(() => {
 
       if (cancelled) return;
 
-      // --- ONLY redirect if API REALLY says room does NOT exist ---
-      if (res.status === 404) {
+      const data = await res.json();
+
+      // ❗ REAL CHECK → backend returns { success: false } NOT 404
+      if (data.success === false) {
         setValid(false);
         router.push("/");
         return;
       }
 
-      // --- 200 means valid ---
-      if (res.status === 200) {
-        setValid(true);
-        return;
-      }
-
-      // --- other errors? don't redirect instantly ---
-      setValid(null);
+      // ✔ room exists
+      setValid(true);
     } catch (err) {
       console.log("Room verify error:", err.message);
-      if (!cancelled) setValid(null);
+
+      // ❗ Do NOT redirect on server/network error
+      setValid(null);
     }
   };
 
@@ -81,6 +81,9 @@ useEffect(() => {
     cancelled = true;
   };
 }, [realRoomId]);
+
+
+
 
 
   useEffect(() => {
