@@ -35,7 +35,7 @@ export default function Page({ params }) {
   });
 
   // ----------------------------------------------------
-  // 1️⃣ CORRECT ROOM VERIFICATION (Fixes ALL redirects)
+  // 1️⃣ VERIFY ROOM
   // ----------------------------------------------------
   useEffect(() => {
     if (!realRoomId) return;
@@ -78,7 +78,7 @@ export default function Page({ params }) {
   }, [realRoomId]);
 
   // ----------------------------------------------------
-  // 2️⃣ SOCKET CONNECTION (Join room + listen events)
+  // 2️⃣ SOCKET CONNECTION
   // ----------------------------------------------------
   useEffect(() => {
     if (valid !== true || !realRoomId) return;
@@ -111,7 +111,7 @@ export default function Page({ params }) {
   }, [valid, realRoomId]);
 
   // ----------------------------------------------------
-  // 3️⃣ LOAD EXISTING MOVIE FOR REFRESH / NEW JOINERS
+  // 3️⃣ LOAD EXISTING MOVIE
   // ----------------------------------------------------
   useEffect(() => {
     if (valid !== true || !realRoomId) return;
@@ -136,7 +136,7 @@ export default function Page({ params }) {
   }, [valid, realRoomId]);
 
   // ----------------------------------------------------
-  // CHAT
+  // CHAT — SEND
   // ----------------------------------------------------
   const handleSend = () => {
     if (!socket || !input.trim()) return;
@@ -156,7 +156,7 @@ export default function Page({ params }) {
   const handleKeyDown = (e) => e.key === "Enter" && handleSend();
 
   // ----------------------------------------------------
-  // 5️⃣ UPLOAD + CONVERT + SOCKET BROADCAST
+  // UPLOAD + CONVERT
   // ----------------------------------------------------
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -221,7 +221,7 @@ export default function Page({ params }) {
   };
 
   // ----------------------------------------------------
-  // 6️⃣ DELETE MOVIE
+  // DELETE MOVIE
   // ----------------------------------------------------
   const handleDelete = () => {
     setPopup({
@@ -251,14 +251,20 @@ export default function Page({ params }) {
     });
   };
 
+  // ----------------------------------------------------
   // STATUS
+  // ----------------------------------------------------
   if (valid === null)
     return <p className="text-white text-center mt-10">Checking room…</p>;
 
   if (valid === false) return null;
 
+  // ----------------------------------------------------
+  // UI START
+  // ----------------------------------------------------
   return (
     <div className="w-full min-h-screen bg-[#0D0D0E] text-white flex flex-col">
+
       {/* NAVBAR */}
       <div className="w-full h-[4rem] flex justify-between items-center px-[3vw] bg-[#0D0D0E]/90 border-b border-white/5 backdrop-blur-md">
         <div
@@ -281,6 +287,7 @@ export default function Page({ params }) {
 
       {/* BODY */}
       <div className="flex flex-col lg:flex-row w-full flex-1 p-[2vw] gap-[2vw]">
+
         {/* PLAYER */}
         <div className="w-full lg:w-[70%] bg-[#101010] rounded-2xl p-[3px] shadow-lg relative">
           <NetflixPlayer src={videoUrl} roomId={realRoomId} />
@@ -296,7 +303,8 @@ export default function Page({ params }) {
 
         {/* CHAT + UPLOAD */}
         <div className="w-full lg:w-[30%] bg-[#151515] rounded-2xl p-3 flex flex-col">
-          {/* Upload/Delete */}
+
+          {/* UPLOAD/DELETE */}
           <div className="p-3 border-b border-[#1C1C1C] flex flex-col items-center">
             {videoUrl ? (
               <button
@@ -324,21 +332,32 @@ export default function Page({ params }) {
             )}
           </div>
 
-          {/* Chat */}
-          <div className="flex-1 mt-3 space-y-2 overflow-y-auto">
+          {/* 🔥🔥🔥 CHAT (UPDATED BUBBLES) 🔥🔥🔥 */}
+          <div className="flex-1 mt-3 space-y-3 overflow-y-auto pr-2">
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`px-4 py-2 rounded-xl ${
-                  msg.sender === "me" ? "bg-[#3A3A3A] ml-auto" : "bg-[#202020]"
+                className={`flex w-full ${
+                  msg.sender === "me"
+                    ? "justify-end"
+                    : "justify-start"
                 }`}
               >
-                {msg.text}
+                <div
+                  className={`px-4 py-2 rounded-2xl max-w-[75%] break-words text-[0.95rem] leading-relaxed
+                    ${
+                      msg.sender === "me"
+                        ? "bg-red-600/80 text-white rounded-br-none"
+                        : "bg-[#222] text-gray-200 rounded-bl-none"
+                    }`}
+                >
+                  {msg.text}
+                </div>
               </div>
             ))}
           </div>
 
-          {/* Chat Input */}
+          {/* INPUT */}
           <div className="flex items-center gap-2 mt-3">
             <input
               value={input}
