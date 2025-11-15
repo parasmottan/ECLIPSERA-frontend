@@ -12,8 +12,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "ECLIPSERA",
-  description: "Watch movies together online with ECLIPSERA",
+  title: "VELOURA",
+  description: "Watch movies together online with VELOURA",
    icons: {
     icon: "eclipsra.jpg", // or /logo.png
   },

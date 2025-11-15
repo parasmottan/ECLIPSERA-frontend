@@ -43,7 +43,7 @@ export default function Home() {
         <h1
           className={`text-[clamp(1rem,1.6vw,1.8rem)] tracking-wide ${cinzel.variable} font-serif cursor-pointer`}
         >
-          ECLIPSERA
+          VELOURA
         </h1>
 
         <button className="moon-btn" aria-label="Toggle theme">
@@ -109,7 +109,7 @@ export default function Home() {
 
         {/* Copyright */}
         <p className="text-white/30 text-[clamp(0.7rem,0.85vw,1rem)] mt-1">
-          © 2024 Eclipsera — All rights reserved.
+          © 2024 Veloura — All rights reserved.
         </p>
       </footer>
 
