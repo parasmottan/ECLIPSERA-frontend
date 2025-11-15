@@ -40,32 +40,49 @@ export default function Page({ params }) {
   // ---------------------------------------------
   // ✅ Verify Room (ONLY when realRoomId is available)
   // ---------------------------------------------
-  useEffect(() => {
-    if (!realRoomId) return;
+// ✅ SAFEST ROOM VERIFICATION (no wrong redirects)
+useEffect(() => {
+  if (!realRoomId) return;
 
-    const verify = async () => {
-      try {
-        const res = await axios.get(
-          `https://eclipsera.zeabur.app/api/createroom/${realRoomId}`
-        );
+  let cancelled = false;
 
-        if (res.status === 200) setValid(true);
-        else {
-          setValid(false);
-          router.push("/");
-        }
-      } catch {
+  const verifyRoom = async () => {
+    try {
+      const res = await fetch(
+        `https://eclipsera.zeabur.app/api/createroom/${realRoomId}`
+      );
+
+      if (cancelled) return;
+
+      // --- ONLY redirect if API REALLY says room does NOT exist ---
+      if (res.status === 404) {
         setValid(false);
         router.push("/");
+        return;
       }
-    };
 
-    verify();
-  }, [realRoomId, router]);
+      // --- 200 means valid ---
+      if (res.status === 200) {
+        setValid(true);
+        return;
+      }
 
-  // ---------------------------------------------
-  // 🔌 SOCKET SETUP
-  // ---------------------------------------------
+      // --- other errors? don't redirect instantly ---
+      setValid(null);
+    } catch (err) {
+      console.log("Room verify error:", err.message);
+      if (!cancelled) setValid(null);
+    }
+  };
+
+  verifyRoom();
+
+  return () => {
+    cancelled = true;
+  };
+}, [realRoomId]);
+
+
   useEffect(() => {
     if (valid !== true || !realRoomId) return;
 
@@ -90,9 +107,7 @@ export default function Page({ params }) {
     };
   }, [valid, realRoomId]);
 
-  // ---------------------------------------------
-  // ✉ Send Message
-  // ---------------------------------------------
+ 
   const handleSend = () => {
     if (!input.trim() || !socket) return;
 
