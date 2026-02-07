@@ -333,7 +333,7 @@ export default function Page({ params }) {
           </div>
 
           {/* 🔥🔥🔥 CHAT (UPDATED BUBBLES) 🔥🔥🔥 */}
-          <div className="flex-1 mt-3 space-y-3 overflow-y-auto pr-2 ">
+          <div className="flex-1 mt-3  space-y-3 overflow-y-auto pr-2 ">
             {messages.map((msg, i) => (
               <div
                 key={i}
