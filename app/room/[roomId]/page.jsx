@@ -45,7 +45,7 @@ export default function Page({ params }) {
     const verify = async () => {
       try {
         const res = await fetch(
-          `https://eclipsera.zeabur.app/api/verifyroom/${realRoomId}`,
+          `https://veloura.zeabur.app/api/verifyroom/${realRoomId}`,
           {
             method: "GET",
             cache: "no-store",
@@ -83,7 +83,7 @@ export default function Page({ params }) {
   useEffect(() => {
     if (valid !== true || !realRoomId) return;
 
-    const newSocket = io("https://eclipsera.zeabur.app", {
+    const newSocket = io("https://veloura.zeabur.app", {
       transports: ["websocket"],
       autoConnect: true,
     });
@@ -119,7 +119,7 @@ export default function Page({ params }) {
     const load = async () => {
       try {
         const res = await fetch(
-          `https://eclipsera.zeabur.app/api/movieupload/${realRoomId}`
+          `https://veloura.zeabur.app/api/movieupload/${realRoomId}`
         );
         const data = await res.json();
 
@@ -176,7 +176,7 @@ export default function Page({ params }) {
       setUploading(true);
       setStatusMessages(["🚀 Uploading…"]);
 
-      const res = await fetch("https://eclipsera.zeabur.app/api/upload-url");
+      const res = await fetch("https://veloura.zeabur.app/api/upload-url");
       const { uploadURL, fileKey: key } = await res.json();
       setFileKey(key);
 
@@ -191,7 +191,7 @@ export default function Page({ params }) {
       const movieUrl = `https://s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${process.env.NEXT_PUBLIC_AWS_BUCKET}/${key}`;
 
       const convert = await fetch(
-        "https://eclipsera.zeabur.app/api/movieupload/process",
+        "https://veloura.zeabur.app/api/movieupload/process",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -232,7 +232,7 @@ export default function Page({ params }) {
         setPopup({ visible: false });
 
         const res = await fetch(
-          "https://eclipsera.zeabur.app/api/movieupload/delete",
+          "https://veloura.zeabur.app/api/movieupload/delete",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
