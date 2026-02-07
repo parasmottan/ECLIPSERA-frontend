@@ -30,7 +30,7 @@ function Page() {
     const verifyRoom = async () => {
       try {
         const res = await fetch(
-          `https://eclipsera.zeabur.app/api/verifyroom/${roomId}`,
+          `https://veloura.zeabur.app/api/verifyroom/${roomId}`,
           {
             method: "GET",
             cache: "no-store",
@@ -69,7 +69,7 @@ function Page() {
 
     try {
       const res = await fetch(
-        `https://eclipsera.zeabur.app/api/joinroom/${roomId}`,
+        `https://veloura.zeabur.app/api/joinroom/${roomId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
